@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+}
+
+group 'me.dessie'
+version '1.0'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'me.dessie.twitchminecraft.TwitchMinecraft'
+    }
+
+    from configurations.runtime.collect { zipTree(it) }
+}
+
+dependencies {
+    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
+    compileOnly "org.spigotmc:spigot:1.16.2-R0.1-SNAPSHOT"
+}
+

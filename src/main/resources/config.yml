@@ -1,0 +1,57 @@
+clientID: "<Your client ID>"
+clientSecret: "<Your client secret>"
+channelName: "<Channel to check for subscriptions>"
+redirectURI: "http://localhost:8080"
+port: 8080
+
+rewards:
+  tier1:
+    subscribe:
+      #The role to give them when they subscribe
+      #Set to '' to ignore role giving.
+      role: "Subscriber"
+
+      #The commands to execute when they subscribe
+      #%player% will get their Minecraft username
+      #%twitchname% will get their Twitch username.
+
+      #Use -p at the end if you want the command to be executed by the player.
+      #By default all commands are ran by console.
+      commands:
+        - say Thank you %player% for syncing your Twitch account! (%twitchname%)
+        - give %player% diamond 1
+        - spawn -p
+    expire:
+      #The role to remove from them when it expires.
+      role: "Subscriber"
+      commands:
+        - say %twitchname% has not renewed their subscription :(
+        - spawn -p
+
+  tier2:
+    subscribe:
+      role: "Subscriber2"
+      commands:
+        - say Thank you %player% for syncing your Twitch account at tier 2! (%twitchname%)
+        - give %player% diamond 5
+        - spawn -p
+
+    expire:
+      role: "Subscriber2"
+      commands:
+        - say %twitchname% has not renewed their subscription :(
+        - spawn -p
+
+  tier3:
+    subscribe:
+      role: "Subscriber3"
+      commands:
+        - say Thank you %player% for syncing your Twitch account at tier 3! (%twitchname%)
+        - give %player% diamond 15
+        - spawn -p
+
+    expire:
+      role: "Subscriber3"
+      commands:
+        - say %twitchname% has not renewed their subscription :(
+        - spawn -p

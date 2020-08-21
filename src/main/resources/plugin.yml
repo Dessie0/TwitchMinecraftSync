@@ -1,0 +1,24 @@
+name: TwitchMinecraftSync
+author: Dessie
+version: 1.0
+main: me.dessie.twitchminecraft.TwitchMinecraft
+
+api-version: 1.15
+depend:
+  - Vault
+
+
+commands:
+  sync:
+    description: Syncs the user's Minecraft account with their Twitch account
+    aliases:
+      - twitchsync
+      - twitch
+  revoke:
+    description: Revokes a user's permissions and runs the expires commands for them. They can still resync!
+    aliases:
+      - twitchrevoke
+  tinfo:
+    description: Gets the Twitch information of a Minecraft player.
+    aliases:
+      - twitchinfo
