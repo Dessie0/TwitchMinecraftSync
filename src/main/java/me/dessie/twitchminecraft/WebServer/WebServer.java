@@ -27,7 +27,7 @@ public class WebServer implements HttpHandler {
 
     //Where key is their code, and the value is the current response. Updated in the handle() below.
     //Entries are removed when the client requests it & the response is either a fail or success (not waiting)
-    Map<String, Response> reponses = new HashMap<>();
+    Map<String, Response> responses = new HashMap<>();
 
     public void create(int port) {
         try {
@@ -69,12 +69,12 @@ public class WebServer implements HttpHandler {
 
         String code = httpExchange.getRequestURI().getRawQuery().split("=")[1].split("&")[0];
 
-        reponses.put(code, new Response(Responses.WAITING, null));
+        responses.put(code, new Response(Responses.WAITING, null));
         if(optionalHandler.isPresent()) {
             TwitchHandler handler = optionalHandler.get();
 
             if(TwitchPlayer.playerExists(handler.getTwitchPlayer().getUuid())) {
-                reponses.put(code, new Response(Responses.ALREADY_CLAIMED, TwitchPlayer.create(handler.getTwitchPlayer().getUuid())));
+                responses.put(code, new Response(Responses.ALREADY_CLAIMED, TwitchPlayer.create(handler.getTwitchPlayer().getUuid())));
             } else {
                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                     String accessToken = handler.getAccessToken(code);
@@ -86,14 +86,14 @@ public class WebServer implements HttpHandler {
                                 TwitchSubscribeEvent subscribe = new TwitchSubscribeEvent(handler.getTwitchPlayer());
                                 Bukkit.getPluginManager().callEvent(subscribe);
 
-                                reponses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
+                                responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
 
                             });
                         } else {
-                            reponses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
+                            responses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
                         }
                     } else {
-                        reponses.put(code, new Response(Responses.ACCOUNT_USED, TwitchPlayer.create(TwitchPlayer.getUUIDFromChannelName(handler.getTwitchPlayer().getChannelName()))));
+                        responses.put(code, new Response(Responses.ACCOUNT_USED, TwitchPlayer.create(TwitchPlayer.getUUIDFromChannelName(handler.getTwitchPlayer().getChannelName()))));
                     }
                 });
             }
@@ -101,7 +101,7 @@ public class WebServer implements HttpHandler {
             plugin.handlers.remove(handler.getTwitchPlayer().getUuid());
         } else {
             //No handler?
-            reponses.put(code, new Response(Responses.FAILED, null));
+            responses.put(code, new Response(Responses.FAILED, null));
         }
     }
 
@@ -124,6 +124,7 @@ public class WebServer implements HttpHandler {
 }
 
 
+//Sends the twitchminecraft.js when requested by the client.
 class jsManager implements HttpHandler {
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
 
@@ -138,6 +139,7 @@ class jsManager implements HttpHandler {
     }
 }
 
+//Is called whenever the <URI>/twitchminecraft is pinged from the JavaScript.
 class TwitchResponseHandler implements HttpHandler {
 
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
@@ -148,16 +150,17 @@ class TwitchResponseHandler implements HttpHandler {
 
         String code = httpExchange.getRequestURI().getRawQuery().split("=")[1];
 
-        WebServer.Response response = plugin.webServer.reponses.get(code);
+        WebServer.Response response = plugin.webServer.responses.get(code);
 
         JsonObject json = new JsonObject();
-
         json.addProperty("response_type", response.getResponses().toString());
 
         //Remove this from the map.
         if(response.getResponses() != WebServer.Responses.WAITING) {
-            plugin.webServer.reponses.remove(code);
+            plugin.webServer.responses.remove(code);
             if(response.getResponses() != WebServer.Responses.FAILED) {
+
+                //Set all the TwitchPlayer information.
                 json.addProperty("player_name", response.getTwitchPlayer().getName());
                 json.addProperty("uuid", response.getTwitchPlayer().getUuid());
                 json.addProperty("tier", response.getTwitchPlayer().getTier());

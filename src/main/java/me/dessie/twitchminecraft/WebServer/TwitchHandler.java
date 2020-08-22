@@ -46,7 +46,7 @@ public class TwitchHandler extends WebServer {
 
             //They're still subbed, so we can add to their streak.
             int streak = 1;
-            if(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(streak).isBefore(ZonedDateTime.now())) {
+            while(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(streak).isBefore(ZonedDateTime.now())) {
                 streak++;
             }
             twitchPlayer.setStreak(streak);

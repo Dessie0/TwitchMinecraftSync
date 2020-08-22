@@ -17,6 +17,9 @@ function update_header(text) {
     }
 }
 
+
+//Every 1 second we ping the <URI>/twitchresponse to get their current response.
+//Once it's not "WAITING" we can stop checking, and update how our screen is displayed accordingly.
 function getTwitchResponse() {
     var xmlHttp = new XMLHttpRequest();
 

@@ -80,6 +80,7 @@ public class InfoCMD implements CommandExecutor {
                     sender.sendMessage(plugin.color("&dPlayer Name: &a") + twitchPlayer.getName());
                     sender.sendMessage(plugin.color("&dTwitch Name: &a") + twitchPlayer.getChannelName());
                     sender.sendMessage(plugin.color("&dSubscription Tier: &a") + twitchPlayer.getTier());
+                    sender.sendMessage(plugin.color("&dStreak: &a") + twitchPlayer.getStreak());
                     sender.sendMessage(plugin.color("&dExpires On: &a") + expiry);
                     sender.sendMessage(plugin.color("&7&m----------&dTwitchSync&7&m----------"));
 
