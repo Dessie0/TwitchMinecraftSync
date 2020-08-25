@@ -4,6 +4,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -20,6 +23,8 @@ public class TwitchPlayer {
     String refreshToken;
     int tier;
     int streak;
+
+    String logoURL;
 
     //Create the instance.
     public TwitchPlayer(Player player) {
@@ -45,6 +50,7 @@ public class TwitchPlayer {
     public String getUuid() { return player.getUniqueId().toString(); }
     public String getName() { return player.getName(); }
     public String getRefreshToken() { return refreshToken; }
+    public String getLogoURL() { return logoURL; }
 
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     public void setTier(int tier) { this.tier = tier; }
@@ -52,6 +58,7 @@ public class TwitchPlayer {
     public void setChannelID(String channelID) { this.channelID = channelID; }
     public void setChannelName(String channelName) { this.channelName = channelName; }
     public void setStreak(int streak) { this.streak = streak; }
+    public void setLogoURL(String logoURL) { this.logoURL = logoURL; }
 
     public void saveData(boolean isSubbed) {
         if(isSubbed) {

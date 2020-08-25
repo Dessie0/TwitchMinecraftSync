@@ -7,21 +7,19 @@ import com.sun.net.httpserver.HttpServer;
 import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
+import net.lingala.zip4j.ZipFile;
 import org.bukkit.Bukkit;
 
 import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public class WebServer implements HttpHandler {
 
-    HttpServer server;
+    static HttpServer server;
     ThreadPoolExecutor threadPoolExecutor;
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
 
@@ -33,7 +31,6 @@ public class WebServer implements HttpHandler {
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/", this);
-            server.createContext("/twitchminecraft.js", new jsManager());
             server.createContext("/twitchresponse", new TwitchResponseHandler());
             threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
@@ -54,10 +51,21 @@ public class WebServer implements HttpHandler {
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
-        httpExchange.sendResponseHeaders(200, plugin.indexFile.length());
-        OutputStream os = httpExchange.getResponseBody();
-        Files.copy(plugin.indexFile.toPath(), os);
-        os.close();
+        //Serve the index.html if necessary
+        if(httpExchange.getRequestURI().toString().contains("&scope")) {
+            httpExchange.sendResponseHeaders(200, plugin.indexFile.length());
+            OutputStream os = httpExchange.getResponseBody();
+            Files.copy(plugin.indexFile.toPath(), os);
+            os.close();
+        } else {
+            //Serve other files as they are references in the index.html
+            File file = new File(plugin.getDataFolder() + "/webserver" + httpExchange.getRequestURI().toString());
+
+            httpExchange.sendResponseHeaders(200, file.length());
+            OutputStream os = httpExchange.getResponseBody();
+            Files.copy(file.toPath(), os);
+            os.close();
+        }
 
         handlePlayer(httpExchange);
     }
@@ -73,30 +81,43 @@ public class WebServer implements HttpHandler {
         if(optionalHandler.isPresent()) {
             TwitchHandler handler = optionalHandler.get();
 
-            if(TwitchPlayer.playerExists(handler.getTwitchPlayer().getUuid())) {
-                responses.put(code, new Response(Responses.ALREADY_CLAIMED, TwitchPlayer.create(handler.getTwitchPlayer().getUuid())));
-            } else {
-                Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                    String accessToken = handler.getAccessToken(code);
-                    String userID = handler.getUserID(accessToken);
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                //Get the access token
+                String accessToken = handler.getAccessToken(code);
 
-                    if(!TwitchPlayer.accountUsed(handler.getTwitchPlayer().getChannelID())) {
+                //Set the LogoURL inside the TwitchPlayer.
+                String logoURL = handler.getLogoURL(accessToken);
+                handler.getTwitchPlayer().setLogoURL(logoURL);
+
+                if (TwitchPlayer.playerExists(handler.getTwitchPlayer().getUuid())) {
+                    //Create the TwitchPlayer from their saved info.
+                    TwitchPlayer saved = TwitchPlayer.create(handler.getTwitchPlayer().getUuid());
+
+                    //Update the logoURL for the new TwitchPlayer.
+                    saved.setLogoURL(logoURL);
+
+                    responses.put(code, new Response(Responses.ALREADY_CLAIMED, saved));
+                } else {
+                    String userID = handler.getUserID(accessToken);
+                    if (!TwitchPlayer.accountUsed(handler.getTwitchPlayer().getChannelID())) {
                         if (handler.checkIfSubbed(accessToken, userID)) {
                             Bukkit.getScheduler().runTask(plugin, () -> {
-                                TwitchSubscribeEvent subscribe = new TwitchSubscribeEvent(handler.getTwitchPlayer());
-                                Bukkit.getPluginManager().callEvent(subscribe);
-
+                                //Call the TwitchSubscribeEvent
+                                Bukkit.getPluginManager().callEvent(new TwitchSubscribeEvent(handler.getTwitchPlayer()));
                                 responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
-
                             });
-                        } else {
-                            responses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
-                        }
+                        } else responses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
                     } else {
-                        responses.put(code, new Response(Responses.ACCOUNT_USED, TwitchPlayer.create(TwitchPlayer.getUUIDFromChannelName(handler.getTwitchPlayer().getChannelName()))));
+                        //Create the TwitchPlayer from the player who owns this account.
+                        TwitchPlayer created = TwitchPlayer.create(TwitchPlayer.getUUIDFromChannelName(handler.getTwitchPlayer().getChannelName()));
+
+                        //Set the logoURL for the new TwitchPlayer.
+                        created.setLogoURL(logoURL);
+
+                        responses.put(code, new Response(Responses.ACCOUNT_USED, created));
                     }
-                });
-            }
+                }
+            });
 
             plugin.handlers.remove(handler.getTwitchPlayer().getUuid());
         } else {
@@ -123,23 +144,7 @@ public class WebServer implements HttpHandler {
     }
 }
 
-
-//Sends the twitchminecraft.js when requested by the client.
-class jsManager implements HttpHandler {
-    private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
-
-    @Override
-    public void handle(HttpExchange httpExchange) throws IOException {
-        httpExchange.getResponseHeaders().put("Content-Type", Arrays.asList("text/javascript"));
-
-        httpExchange.sendResponseHeaders(200, plugin.jsFile.length());
-        OutputStream os = httpExchange.getResponseBody();
-        Files.copy(plugin.jsFile.toPath(), os);
-        os.close();
-    }
-}
-
-//Is called whenever the <URI>/twitchminecraft is pinged from the JavaScript.
+//Is called whenever the <URI>/twitchresponse is pinged from the JavaScript.
 class TwitchResponseHandler implements HttpHandler {
 
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
@@ -149,7 +154,6 @@ class TwitchResponseHandler implements HttpHandler {
         httpExchange.getResponseHeaders().put("Content-Type", Arrays.asList("application/json"));
 
         String code = httpExchange.getRequestURI().getRawQuery().split("=")[1];
-
         WebServer.Response response = plugin.webServer.responses.get(code);
 
         JsonObject json = new JsonObject();
@@ -159,14 +163,18 @@ class TwitchResponseHandler implements HttpHandler {
         if(response.getResponses() != WebServer.Responses.WAITING) {
             plugin.webServer.responses.remove(code);
             if(response.getResponses() != WebServer.Responses.FAILED) {
-
                 //Set all the TwitchPlayer information.
+                //This depends on which response we got.
                 json.addProperty("player_name", response.getTwitchPlayer().getName());
                 json.addProperty("uuid", response.getTwitchPlayer().getUuid());
-                json.addProperty("tier", response.getTwitchPlayer().getTier());
                 json.addProperty("channel", response.getTwitchPlayer().getChannelName());
-                json.addProperty("expires", response.getTwitchPlayer().getExpires());
-                json.addProperty("streak", response.getTwitchPlayer().getStreak());
+                json.addProperty("logoURL", response.getTwitchPlayer().getLogoURL());
+
+                if(response.getResponses() != WebServer.Responses.NOT_SUBBED) {
+                    json.addProperty("tier", response.getTwitchPlayer().getTier());
+                    json.addProperty("expires", TwitchMinecraft.formatExpiry(response.getTwitchPlayer().getExpires()));
+                    json.addProperty("streak", response.getTwitchPlayer().getStreak());
+                }
             }
         }
 

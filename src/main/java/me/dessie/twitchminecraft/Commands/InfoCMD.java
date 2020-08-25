@@ -48,40 +48,12 @@ public class InfoCMD implements CommandExecutor {
 
                     TwitchPlayer twitchPlayer = TwitchPlayer.create(player);
 
-                    ZonedDateTime time = ZonedDateTime.parse(twitchPlayer.getExpires());
-                    StringBuilder expiry = new StringBuilder();
-
-                    String month = time.getMonth().toString().substring(0, 1) + time.getMonth().toString().substring(1).toLowerCase();
-
-                    expiry.append(month)
-                            .append(" ")
-                            .append(time.getDayOfMonth())
-                            .append(", ")
-                            .append(time.getYear())
-                            .append(" at ");
-
-                    String hour;
-                    if (time.getHour() < 10) {
-                        hour = "0" + time.getHour();
-                    } else {
-                        hour = String.valueOf(time.getHour());
-                    }
-
-                    String minute;
-                    if (time.getMinute() < 10) {
-                        minute = "0" + time.getMinute();
-                    } else {
-                        minute = String.valueOf(time.getMinute());
-                    }
-
-                    expiry.append(hour).append(":").append(minute);
-
                     sender.sendMessage(plugin.color("&7&m----------&dTwitchSync&7&m----------"));
                     sender.sendMessage(plugin.color("&dPlayer Name: &a") + twitchPlayer.getName());
                     sender.sendMessage(plugin.color("&dTwitch Name: &a") + twitchPlayer.getChannelName());
                     sender.sendMessage(plugin.color("&dSubscription Tier: &a") + twitchPlayer.getTier());
                     sender.sendMessage(plugin.color("&dStreak: &a") + twitchPlayer.getStreak());
-                    sender.sendMessage(plugin.color("&dExpires On: &a") + expiry);
+                    sender.sendMessage(plugin.color("&dExpires On: &a") + TwitchMinecraft.formatExpiry(twitchPlayer.getExpires()));
                     sender.sendMessage(plugin.color("&7&m----------&dTwitchSync&7&m----------"));
 
                     return true;

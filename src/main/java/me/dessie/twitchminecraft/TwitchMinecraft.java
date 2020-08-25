@@ -9,6 +9,7 @@ import me.dessie.twitchminecraft.Events.JoinListener;
 import me.dessie.twitchminecraft.Events.SubscribeEvent;
 import me.dessie.twitchminecraft.WebServer.TwitchHandler;
 import me.dessie.twitchminecraft.WebServer.WebServer;
+import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -21,7 +22,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +41,7 @@ public class TwitchMinecraft extends JavaPlugin {
     public File twitchData = new File(getDataFolder() + "/twitchdata.yml");
     public File htmlFolder = new File(getDataFolder(), "webserver");
     public File indexFile = new File(getDataFolder(), "webserver" + File.separator + "index.html");
-    public File jsFile = new File(getDataFolder(), "webserver" + File.separator + "twitchminecraft.js");
+    public File jsFile = new File(getDataFolder(), "webserver" + File.separator + "scripts" + File.separator + "twitchminecraft.js");
 
     public FileConfiguration twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
 
@@ -104,6 +109,38 @@ public class TwitchMinecraft extends JavaPlugin {
         return new JsonParser().parse(content.toString()).getAsJsonObject();
     }
 
+    public static String formatExpiry(String expiry) {
+        ZonedDateTime time = ZonedDateTime.parse(expiry);
+        StringBuilder formatted = new StringBuilder();
+
+        String month = time.getMonth().toString().substring(0, 1) + time.getMonth().toString().substring(1).toLowerCase();
+
+        formatted.append(month)
+                .append(" ")
+                .append(time.getDayOfMonth())
+                .append(", ")
+                .append(time.getYear())
+                .append(" at ");
+
+        String hour;
+        if (time.getHour() < 10) {
+            hour = "0" + time.getHour();
+        } else {
+            hour = String.valueOf(time.getHour());
+        }
+
+        String minute;
+        if (time.getMinute() < 10) {
+            minute = "0" + time.getMinute();
+        } else {
+            minute = String.valueOf(time.getMinute());
+        }
+
+        formatted.append(hour).append(":").append(minute);
+
+        return formatted.toString();
+    }
+
     private void createFiles() {
         if(!twitchData.exists()) {
             saveResource(twitchData.getName(), false);
@@ -119,8 +156,15 @@ public class TwitchMinecraft extends JavaPlugin {
             htmlFolder.mkdirs();
 
             try {
-                FileUtils.copyInputStreamToFile(this.getResource("serverdisplay/index.html"), new File(getDataFolder() + "/webserver/index.html"));
-                FileUtils.copyInputStreamToFile(this.getResource("serverdisplay/twitchminecraft.js"), new File(getDataFolder() + "/webserver/twitchminecraft.js"));
+                //Copy the zip file.
+                FileUtils.copyInputStreamToFile(this.getResource("serverdisplay.zip"), new File(getDataFolder() + "/webserver/serverdisplay.zip"));
+
+                //Unzip
+                new ZipFile(getDataFolder() + "/webserver/serverdisplay.zip").extractAll(getDataFolder() + "/webserver");
+
+                //Delete zip file
+                new File(getDataFolder() + "/webserver/serverdisplay.zip").delete();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -5,6 +5,15 @@ plugins {
 group 'me.dessie'
 version '1.0'
 
+compileJava.options.encoding = 'UTF-8'
+
+task copyJar(type: Copy) {
+    from "$buildDir/libs/"
+    into project.findProperty("outputDir")
+}
+
+build.finalizedBy copyJar
+
 repositories {
     mavenCentral()
     mavenLocal()
@@ -14,6 +23,12 @@ repositories {
     }
 }
 
+dependencies {
+    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
+    compileOnly "org.spigotmc:spigot:1.16.2-R0.1-SNAPSHOT"
+    compile 'net.lingala.zip4j:zip4j:2.6.1'
+}
+
 jar {
     manifest {
         attributes 'Main-Class': 'me.dessie.twitchminecraft.TwitchMinecraft'
@@ -21,9 +36,3 @@ jar {
 
     from configurations.runtime.collect { zipTree(it) }
 }
-
-dependencies {
-    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
-    compileOnly "org.spigotmc:spigot:1.16.2-R0.1-SNAPSHOT"
-}
-

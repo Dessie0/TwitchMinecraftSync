@@ -50,7 +50,6 @@ public class TwitchHandler extends WebServer {
                 streak++;
             }
             twitchPlayer.setStreak(streak);
-
             twitchPlayer.setExpires(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(twitchPlayer.getStreak()).toString());
 
             //We're done checking, so save all their new data.
@@ -89,6 +88,25 @@ public class TwitchHandler extends WebServer {
 
             return twitchPlayer.getChannelID();
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public String getLogoURL(String accessToken) {
+        try {
+            URL url = new URL("https://api.twitch.tv/kraken/user");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+
+            con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
+            con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
+            con.setRequestProperty("Authorization", "OAuth " + accessToken);
+
+            con.setRequestMethod("GET");
+
+            return plugin.getJsonObject(con.getInputStream()).get("logo").getAsString();
         } catch (IOException e) {
             e.printStackTrace();
         }
