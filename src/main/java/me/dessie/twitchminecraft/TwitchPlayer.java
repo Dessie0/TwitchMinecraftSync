@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public class TwitchPlayer {
 
     private static TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
+    public static List<String> subbedList = plugin.twitchConfig.getStringList("hasSubbed");
 
     OfflinePlayer player;
     String channelID;
@@ -69,6 +70,12 @@ public class TwitchPlayer {
             plugin.twitchConfig.set(this.getUuid() + ".tier", this.tier);
             plugin.twitchConfig.set(this.getUuid() + ".refreshToken", this.refreshToken);
             plugin.twitchConfig.set(this.getUuid() + ".streak", this.streak);
+
+            //Add them to the hasSubbed list if they're not already in it.
+            if(!subbedList.contains(this.getUuid())) {
+                subbedList.add(this.getUuid());
+                plugin.twitchConfig.set("hasSubbed", subbedList);
+            }
         } else {
             //Remove them from the config.
             plugin.twitchConfig.set(this.getUuid(), null);
@@ -83,7 +90,7 @@ public class TwitchPlayer {
 
     public static boolean accountUsed(String channelID) {
         Set<String> keys = plugin.twitchConfig.getConfigurationSection("").getKeys(false);
-        keys.remove("revoked");
+        keys.removeIf(key -> plugin.twitchConfig.getConfigurationSection(key) == null);
 
         return !keys.stream().map(key -> plugin.twitchConfig.getConfigurationSection(key).getString("channelID"))
                 .filter(id -> id.equalsIgnoreCase(channelID)).collect(Collectors.toList()).isEmpty();
@@ -91,7 +98,7 @@ public class TwitchPlayer {
 
     public static String getUUIDFromChannelName(String channelName) {
         Set<String> keys = plugin.twitchConfig.getConfigurationSection("").getKeys(false);
-        keys.remove("revoked");
+        keys.removeIf(key -> plugin.twitchConfig.getConfigurationSection(key) == null);
 
         List<String> uuid = keys.stream()
                 .filter(key -> plugin.twitchConfig.getConfigurationSection(key).getString("channelName").equalsIgnoreCase(channelName))

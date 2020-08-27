@@ -4,10 +4,10 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchResubscribeEvent;
 import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
-import net.lingala.zip4j.ZipFile;
 import org.bukkit.Bukkit;
 
 import java.io.*;
@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class WebServer implements HttpHandler {
 
-    static HttpServer server;
+    public HttpServer server;
     ThreadPoolExecutor threadPoolExecutor;
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
 
@@ -37,7 +37,7 @@ public class WebServer implements HttpHandler {
             server.setExecutor(threadPoolExecutor);
             server.start();
 
-            System.out.println("Server started on port " + port);
+            Bukkit.getLogger().info("[TwitchMinecraftSync] Server started on port " + port);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -52,7 +52,8 @@ public class WebServer implements HttpHandler {
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         //Serve the index.html if necessary
-        if(httpExchange.getRequestURI().toString().contains("&scope")) {
+
+        if(httpExchange.getRequestURI().toString().contains("&scope") || httpExchange.getRequestURI().toString().equalsIgnoreCase("/")) {
             httpExchange.sendResponseHeaders(200, plugin.indexFile.length());
             OutputStream os = httpExchange.getResponseBody();
             Files.copy(plugin.indexFile.toPath(), os);
@@ -100,11 +101,22 @@ public class WebServer implements HttpHandler {
                 } else {
                     String userID = handler.getUserID(accessToken);
                     if (!TwitchPlayer.accountUsed(handler.getTwitchPlayer().getChannelID())) {
+
+                        //Check if they've previously subbed.
+                        boolean hasSubbed = TwitchPlayer.subbedList.contains(handler.getTwitchPlayer().getUuid());
+
                         if (handler.checkIfSubbed(accessToken, userID)) {
                             Bukkit.getScheduler().runTask(plugin, () -> {
-                                //Call the TwitchSubscribeEvent
-                                Bukkit.getPluginManager().callEvent(new TwitchSubscribeEvent(handler.getTwitchPlayer()));
-                                responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
+                                //Call the respective event
+                                //Calls Resubscribe if they have subbed in the past.
+                                //Calls Subscribe if they haven't.
+                                if(hasSubbed) {
+                                    Bukkit.getPluginManager().callEvent(new TwitchResubscribeEvent(handler.getTwitchPlayer()));
+                                    responses.put(code, new Response(Responses.RESUBBED, handler.getTwitchPlayer()));
+                                } else {
+                                    Bukkit.getPluginManager().callEvent(new TwitchSubscribeEvent(handler.getTwitchPlayer()));
+                                    responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
+                                }
                             });
                         } else responses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
                     } else {
@@ -127,7 +139,6 @@ public class WebServer implements HttpHandler {
     }
 
     class Response {
-
         Responses responses;
         TwitchPlayer twitchPlayer;
         Response(Responses responses, TwitchPlayer twitchPlayer) {
@@ -140,7 +151,7 @@ public class WebServer implements HttpHandler {
     }
 
     enum Responses {
-        WAITING, ALREADY_CLAIMED, CLAIMED, FAILED, ACCOUNT_USED, NOT_SUBBED
+        WAITING, ALREADY_CLAIMED, CLAIMED, RESUBBED, FAILED, ACCOUNT_USED, NOT_SUBBED
     }
 }
 
@@ -153,27 +164,32 @@ class TwitchResponseHandler implements HttpHandler {
     public void handle(HttpExchange httpExchange) throws IOException {
         httpExchange.getResponseHeaders().put("Content-Type", Arrays.asList("application/json"));
 
-        String code = httpExchange.getRequestURI().getRawQuery().split("=")[1];
-        WebServer.Response response = plugin.webServer.responses.get(code);
-
         JsonObject json = new JsonObject();
-        json.addProperty("response_type", response.getResponses().toString());
+        String code = httpExchange.getRequestURI().getRawQuery().split("=")[1];
 
-        //Remove this from the map.
-        if(response.getResponses() != WebServer.Responses.WAITING) {
-            plugin.webServer.responses.remove(code);
-            if(response.getResponses() != WebServer.Responses.FAILED) {
-                //Set all the TwitchPlayer information.
-                //This depends on which response we got.
-                json.addProperty("player_name", response.getTwitchPlayer().getName());
-                json.addProperty("uuid", response.getTwitchPlayer().getUuid());
-                json.addProperty("channel", response.getTwitchPlayer().getChannelName());
-                json.addProperty("logoURL", response.getTwitchPlayer().getLogoURL());
+        //Failed, code was returned as null.
+        if (code.equalsIgnoreCase("null")) {
+            json.addProperty("response_type", WebServer.Responses.FAILED.toString());
+        } else {
+            WebServer.Response response = plugin.webServer.responses.get(code);
 
-                if(response.getResponses() != WebServer.Responses.NOT_SUBBED) {
-                    json.addProperty("tier", response.getTwitchPlayer().getTier());
-                    json.addProperty("expires", TwitchMinecraft.formatExpiry(response.getTwitchPlayer().getExpires()));
-                    json.addProperty("streak", response.getTwitchPlayer().getStreak());
+            json.addProperty("response_type", response.getResponses().toString());
+            //Remove this from the map.
+            if (response.getResponses() != WebServer.Responses.WAITING) {
+                plugin.webServer.responses.remove(code);
+                if (response.getResponses() != WebServer.Responses.FAILED) {
+                    //Set all the TwitchPlayer information.
+                    //This depends on which response we got.
+                    json.addProperty("player_name", response.getTwitchPlayer().getName());
+                    json.addProperty("uuid", response.getTwitchPlayer().getUuid());
+                    json.addProperty("channel", response.getTwitchPlayer().getChannelName());
+                    json.addProperty("logoURL", response.getTwitchPlayer().getLogoURL());
+
+                    if (response.getResponses() != WebServer.Responses.NOT_SUBBED) {
+                        json.addProperty("tier", response.getTwitchPlayer().getTier());
+                        json.addProperty("expires", TwitchMinecraft.formatExpiry(response.getTwitchPlayer().getExpires()));
+                        json.addProperty("streak", response.getTwitchPlayer().getStreak());
+                    }
                 }
             }
         }

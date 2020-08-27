@@ -28,7 +28,7 @@ public class InfoCMD implements CommandExecutor {
                         //Attempt to get the information from a Twitch username.
 
                         Set<String> keys = plugin.twitchConfig.getConfigurationSection("").getKeys(false);
-                        keys.remove("revoked");
+                        keys.removeIf(key -> plugin.twitchConfig.getConfigurationSection(key) == null);
 
                         List<String> uuids = keys.stream()
                                 .filter(uuid -> plugin.twitchConfig.getString(uuid + ".channelName").equalsIgnoreCase(args[0]))

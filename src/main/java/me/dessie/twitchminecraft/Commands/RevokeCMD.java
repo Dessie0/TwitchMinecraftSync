@@ -1,5 +1,7 @@
 package me.dessie.twitchminecraft.Commands;
 
+import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchExpireEvent;
+import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.RewardHandler;
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
@@ -47,8 +49,8 @@ public class RevokeCMD implements CommandExecutor {
 
         TwitchPlayer twitchPlayer = TwitchPlayer.create(player.getPlayer());
 
-        //Execute remove rewards for this player.
-        RewardHandler.remove(twitchPlayer);
+        //Call the expire event.
+        Bukkit.getPluginManager().callEvent(new TwitchExpireEvent(twitchPlayer));
 
         //Remove them from the YAML file.
         twitchPlayer.saveData(false);

@@ -21,11 +21,17 @@ rewards:
         - say Thank you %player% for syncing your Twitch account! (%twitchname%)
         - give %player% diamond 1
         - spawn -p
+
+    resubscribe:
+      role: "Subscriber"
+      commands:
+        - say Thank you %player% for re-subscribing! (%twitchname%)
+
     expire:
       #The role to remove from them when it expires.
       role: "Subscriber"
       commands:
-        - say %twitchname% has not renewed their subscription :(
+        - say %player% (%twitchname%) has not renewed their subscription :(
         - spawn -p
 
   tier2:
@@ -36,10 +42,15 @@ rewards:
         - give %player% diamond 5
         - spawn -p
 
+    resubscribe:
+      role: "Subscriber2"
+      commands:
+        - say Thank you %player% for re-subscribing at tier 2! (%twitchname%)
+
     expire:
       role: "Subscriber2"
       commands:
-        - say %twitchname% has not renewed their subscription :(
+        - say %player% (%twitchname%) has not renewed their subscription :(
         - spawn -p
 
   tier3:
@@ -50,8 +61,13 @@ rewards:
         - give %player% diamond 15
         - spawn -p
 
+    resubscribe:
+      role: "Subscriber3"
+      commands:
+        - say Thank you %player% for re-subscribing at tier 3! (%twitchname%)
+
     expire:
       role: "Subscriber3"
       commands:
-        - say %twitchname% has not renewed their subscription :(
+        - say %player% (%twitchname%) has not renewed their subscription :(
         - spawn -p

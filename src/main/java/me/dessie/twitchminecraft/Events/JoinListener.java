@@ -1,6 +1,9 @@
 package me.dessie.twitchminecraft.Events;
 
 import me.dessie.twitchminecraft.Commands.RevokeCMD;
+import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchExpireEvent;
+import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchResubscribeEvent;
+import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.RewardHandler;
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
@@ -43,13 +46,13 @@ public class JoinListener implements Listener {
                     //Just let them know they've been renewed!
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage(plugin.color("&5[TwitchMinecraftSync] &aWe've updated your expiry date for this server."));
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage(plugin.color("&5[TwitchMinecraftSync] &aYour sub will expire on &e" + handler.getTwitchPlayer().getExpires()));
-                    RewardHandler.give(twitchPlayer);
+                    Bukkit.getPluginManager().callEvent(new TwitchResubscribeEvent(handler.getTwitchPlayer()));
                 } else {
                     //Revoke stuff, not subbed anymore.
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&5[TwitchMinecraftSync] &cWe could not confirm that you have resynced your account!");
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&5[TwitchMinecraftSync] &cWe've removed your perms and sent you to the &0Black Box &c.");
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&5[TwitchMinecraftSync] &cIf you want perms to the server back, please re-sub and type /sync!");
-                    RewardHandler.remove(twitchPlayer);
+                    Bukkit.getPluginManager().callEvent(new TwitchExpireEvent(handler.getTwitchPlayer()));
                 }
             });
         }

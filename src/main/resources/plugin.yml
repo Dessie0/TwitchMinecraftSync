@@ -1,12 +1,11 @@
 name: TwitchMinecraftSync
 author: Dessie
-version: 1.0
+version: 1.0.2
 main: me.dessie.twitchminecraft.TwitchMinecraft
 
 api-version: 1.15
 depend:
   - Vault
-
 
 commands:
   sync:
@@ -22,3 +21,15 @@ commands:
     description: Gets the Twitch information of a Minecraft player.
     aliases:
       - twitchinfo
+
+  twitchreload:
+    description: Reloads configuration files.
+    aliases:
+      - treload
+      - twitchsyncreload
+
+  twitchserverreload:
+    description: Restarts the webserver.
+    aliases:
+      - tserverreload
+      - twitchsyncserverreload

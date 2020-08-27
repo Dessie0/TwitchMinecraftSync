@@ -2,9 +2,7 @@ package me.dessie.twitchminecraft;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.dessie.twitchminecraft.Commands.InfoCMD;
-import me.dessie.twitchminecraft.Commands.RevokeCMD;
-import me.dessie.twitchminecraft.Commands.SyncCMD;
+import me.dessie.twitchminecraft.Commands.*;
 import me.dessie.twitchminecraft.Events.JoinListener;
 import me.dessie.twitchminecraft.Events.SubscribeEvent;
 import me.dessie.twitchminecraft.WebServer.TwitchHandler;
@@ -41,7 +39,6 @@ public class TwitchMinecraft extends JavaPlugin {
     public File twitchData = new File(getDataFolder() + "/twitchdata.yml");
     public File htmlFolder = new File(getDataFolder(), "webserver");
     public File indexFile = new File(getDataFolder(), "webserver" + File.separator + "index.html");
-    public File jsFile = new File(getDataFolder(), "webserver" + File.separator + "scripts" + File.separator + "twitchminecraft.js");
 
     public FileConfiguration twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
 
@@ -57,6 +54,10 @@ public class TwitchMinecraft extends JavaPlugin {
         getCommand("sync").setExecutor(new SyncCMD());
         getCommand("revoke").setExecutor(new RevokeCMD());
         getCommand("tinfo").setExecutor(new InfoCMD());
+        getCommand("twitchreload").setExecutor(new ReloadCMD());
+        getCommand("twitchserverreload").setExecutor(new ReloadServerCMD());
+
+        //Get the channel ID of the channel we're check for subs.
         getChannelID();
 
         getServer().getPluginManager().registerEvents(new JoinListener(), this);
@@ -69,7 +70,7 @@ public class TwitchMinecraft extends JavaPlugin {
     }
 
     public void getChannelID() {
-        System.out.println("Getting Channel ID for " + getConfig().getString("channelName"));
+        Bukkit.getLogger().info("[TwitchMinecraftSync] Getting Channel ID for " + getConfig().getString("channelName"));
 
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             try {
@@ -80,8 +81,12 @@ public class TwitchMinecraft extends JavaPlugin {
                 con.setRequestProperty("Client-ID", getConfig().getString("clientID"));
                 con.setRequestMethod("GET");
 
-                JsonObject json = getJsonObject(con.getInputStream());
-                channelID = json.get("users").getAsJsonArray().get(0).getAsJsonObject().get("_id").getAsString();
+                try {
+                    JsonObject json = getJsonObject(con.getInputStream());
+                    channelID = json.get("users").getAsJsonArray().get(0).getAsJsonObject().get("_id").getAsString();
+                } catch (IndexOutOfBoundsException | IOException e) {
+                    Bukkit.getLogger().severe("[TwitchMinecraftSync] Invalid Twitch channel name or Client ID.");
+                }
 
                 con.disconnect();
             } catch (IOException e) {
@@ -141,7 +146,7 @@ public class TwitchMinecraft extends JavaPlugin {
         return formatted.toString();
     }
 
-    private void createFiles() {
+    public void createFiles() {
         if(!twitchData.exists()) {
             saveResource(twitchData.getName(), false);
         }
