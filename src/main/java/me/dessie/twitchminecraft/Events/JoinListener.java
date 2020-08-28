@@ -44,14 +44,14 @@ public class JoinListener implements Listener {
             Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                 if(handler.checkIfSubbed(handler.getNewAccessToken(twitchPlayer), twitchPlayer.getChannelID())) {
                     //Just let them know they've been renewed!
-                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage(plugin.color("&5[TwitchMinecraftSync] &aWe've updated your expiry date for this server."));
-                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage(plugin.color("&5[TwitchMinecraftSync] &aYour sub will expire on &e" + handler.getTwitchPlayer().getExpires()));
+                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage(plugin.color("&d[TwitchMinecraftSync] &aWe've updated your expiry date for this server."));
+                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage(plugin.color("&d[TwitchMinecraftSync] &aYour sub will expire on &e" + TwitchMinecraft.formatExpiry(handler.getTwitchPlayer().getExpires())));
                     Bukkit.getPluginManager().callEvent(new TwitchResubscribeEvent(handler.getTwitchPlayer()));
                 } else {
                     //Revoke stuff, not subbed anymore.
-                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&5[TwitchMinecraftSync] &cWe could not confirm that you have resynced your account!");
-                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&5[TwitchMinecraftSync] &cWe've removed your perms and sent you to the &0Black Box &c.");
-                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&5[TwitchMinecraftSync] &cIf you want perms to the server back, please re-sub and type /sync!");
+                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&d[TwitchMinecraftSync] &cWe could not confirm that you have resynced your account!");
+                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&d[TwitchMinecraftSync] &cWe've removed your perms and sent you to the &0Black Box &c.");
+                    handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&d[TwitchMinecraftSync] &cIf you want perms to the server back, please re-sub and type /sync!");
                     Bukkit.getPluginManager().callEvent(new TwitchExpireEvent(handler.getTwitchPlayer()));
                 }
             });
