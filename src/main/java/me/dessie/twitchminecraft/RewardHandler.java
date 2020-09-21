@@ -72,13 +72,13 @@ public class RewardHandler {
     }
 
     //Get roles.
-    private static String getGiveRole(int tier) { return plugin.getConfig().getString("rewards.tier" + tier + ".subscribe.role"); }
-    private static String getResubRole(int tier) { return plugin.getConfig().getString("rewards.tier" + tier + ".resubscribe.role"); }
-    private static String getRemoveRole(int tier) { return plugin.getConfig().getString("rewards.tier" + tier + ".expire.role"); }
+    public static String getGiveRole(int tier) { return plugin.getConfig().getString("rewards.tier" + tier + ".subscribe.role"); }
+    public static String getResubRole(int tier) { return plugin.getConfig().getString("rewards.tier" + tier + ".resubscribe.role"); }
+    public static String getRemoveRole(int tier) { return plugin.getConfig().getString("rewards.tier" + tier + ".expire.role"); }
 
-    private static Map<String, CommandSender> getGiveCommands(TwitchPlayer player) { return getCommands(player, "subscribe"); }
-    private static Map<String, CommandSender> getResubCommands(TwitchPlayer player) { return getCommands(player, "resubscribe"); }
-    private static Map<String, CommandSender> getRevokeCommands(TwitchPlayer player) { return getCommands(player, "expire"); }
+    public static Map<String, CommandSender> getGiveCommands(TwitchPlayer player) { return getCommands(player, "subscribe"); }
+    public static Map<String, CommandSender> getResubCommands(TwitchPlayer player) { return getCommands(player, "resubscribe"); }
+    public static Map<String, CommandSender> getRevokeCommands(TwitchPlayer player) { return getCommands(player, "expire"); }
 
     //Get all the commands in the tier.
     //Replace all placeholders where necessary

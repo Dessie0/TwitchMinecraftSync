@@ -33,6 +33,17 @@ public class JoinListener implements Listener {
         if(TwitchPlayer.playerExists(player.getUniqueId().toString())) {
             twitchPlayer = TwitchPlayer.create(player);
         } else {
+            twitchPlayer = new TwitchPlayer(player);
+
+            //Check if the player has any of the groups that only subs have.
+            //If they do, re-run the revoke commands.
+            for(int tier = 1; tier < 4; tier++) {
+                if(plugin.permission.playerInGroup(player, RewardHandler.getGiveRole(tier))) {
+                    twitchPlayer.setTier(tier);
+                    RewardHandler.remove(new TwitchPlayer(player));
+                }
+            }
+
             player.sendMessage(plugin.color("&cLooks like you're not synced to Twitch! Use /sync to gain access to the server!"));
             return;
         }
@@ -52,7 +63,7 @@ public class JoinListener implements Listener {
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&d[TwitchMinecraftSync] &cWe could not confirm that you have resynced your account!");
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&d[TwitchMinecraftSync] &cWe've removed your perms and sent you to the &0Black Box &c.");
                     handler.getTwitchPlayer().getPlayer().getPlayer().sendMessage("&d[TwitchMinecraftSync] &cIf you want perms to the server back, please re-sub and type /sync!");
-                    Bukkit.getPluginManager().callEvent(new TwitchExpireEvent(handler.getTwitchPlayer()));
+                    Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(new TwitchExpireEvent(handler.getTwitchPlayer())));
                 }
             });
         }
