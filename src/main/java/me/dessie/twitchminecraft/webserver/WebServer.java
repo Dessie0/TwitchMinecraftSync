@@ -1,11 +1,9 @@
-package me.dessie.twitchminecraft.WebServer;
+package me.dessie.twitchminecraft.webserver;
 
 import com.google.gson.JsonObject;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchResubscribeEvent;
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
+import com.sun.net.httpserver.*;
+import me.dessie.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
+import me.dessie.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
 import org.bukkit.Bukkit;
@@ -52,12 +50,13 @@ public class WebServer implements HttpHandler {
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
         //Serve the index.html if necessary
-
-        if(httpExchange.getRequestURI().toString().contains("&scope") || httpExchange.getRequestURI().toString().equalsIgnoreCase("/")) {
+        if(httpExchange.getRequestURI().toString().contains("?code") || httpExchange.getRequestURI().toString().equalsIgnoreCase("/")) {
             httpExchange.sendResponseHeaders(200, plugin.indexFile.length());
             OutputStream os = httpExchange.getResponseBody();
             Files.copy(plugin.indexFile.toPath(), os);
             os.close();
+
+            handlePlayer(httpExchange);
         } else {
             //Serve other files as they are references in the index.html
             File file = new File(plugin.getDataFolder() + "/webserver" + httpExchange.getRequestURI().toString());
@@ -67,16 +66,21 @@ public class WebServer implements HttpHandler {
             Files.copy(file.toPath(), os);
             os.close();
         }
-
-        handlePlayer(httpExchange);
     }
 
     public void handlePlayer(HttpExchange httpExchange) {
-        Optional<TwitchHandler> optionalHandler = plugin.handlers.values().stream()
-                .filter(handle -> handle.getPlayerIP().toString().equalsIgnoreCase(httpExchange.getRemoteAddress().getAddress().toString())
-                        || handle.getPlayerIP().toString().equalsIgnoreCase("/127.0.0.1")).findAny();
+        Map<String, String> params = TwitchMinecraft.getParams(httpExchange.getRequestURI().getRawQuery());
 
-        String code = httpExchange.getRequestURI().getRawQuery().split("=")[1].split("&")[0];
+        String code = params.get("code");
+
+        if(!params.containsKey("uuid")) {
+            responses.put(code, new Response(Responses.FAILED, null));
+        }
+
+        String uuid = params.get("uuid");
+
+        Optional<TwitchHandler> optionalHandler = TwitchHandler.getHandlers().stream()
+                .filter(handle -> handle.getTwitchPlayer().getUuid().equalsIgnoreCase(uuid)).findAny();
 
         responses.put(code, new Response(Responses.WAITING, null));
         if(optionalHandler.isPresent()) {
@@ -131,7 +135,7 @@ public class WebServer implements HttpHandler {
                 }
             });
 
-            plugin.handlers.remove(handler.getTwitchPlayer().getUuid());
+            TwitchHandler.getHandlers().remove(handler);
         } else {
             //No handler?
             responses.put(code, new Response(Responses.FAILED, null));
@@ -187,7 +191,7 @@ class TwitchResponseHandler implements HttpHandler {
 
                     if (response.getResponses() != WebServer.Responses.NOT_SUBBED) {
                         json.addProperty("tier", response.getTwitchPlayer().getTier());
-                        json.addProperty("expires", TwitchMinecraft.formatExpiry(response.getTwitchPlayer().getExpires()));
+                        json.addProperty("expires", TwitchMinecraft.formatExpiry(response.getTwitchPlayer().getExpirationDate()));
                         json.addProperty("streak", response.getTwitchPlayer().getStreak());
                     }
                 }

@@ -1,8 +1,6 @@
-package me.dessie.twitchminecraft.Commands;
+package me.dessie.twitchminecraft.commands;
 
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchExpireEvent;
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
-import me.dessie.twitchminecraft.RewardHandler;
+import me.dessie.twitchminecraft.events.twitchminecraft.TwitchExpireEvent;
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
 import org.bukkit.Bukkit;

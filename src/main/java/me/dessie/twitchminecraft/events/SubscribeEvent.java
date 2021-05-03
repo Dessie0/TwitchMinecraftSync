@@ -1,8 +1,8 @@
-package me.dessie.twitchminecraft.Events;
+package me.dessie.twitchminecraft.events;
 
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchExpireEvent;
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchResubscribeEvent;
-import me.dessie.twitchminecraft.Events.twitchminecraft.TwitchSubscribeEvent;
+import me.dessie.twitchminecraft.events.twitchminecraft.TwitchExpireEvent;
+import me.dessie.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
+import me.dessie.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.RewardHandler;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,5 +23,4 @@ public class SubscribeEvent implements Listener {
     public void onExpire(TwitchExpireEvent event) {
         RewardHandler.remove(event.getTwitchPlayer());
     }
-
 }

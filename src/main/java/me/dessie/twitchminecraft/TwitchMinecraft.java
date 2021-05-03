@@ -2,11 +2,11 @@ package me.dessie.twitchminecraft;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.dessie.twitchminecraft.Commands.*;
-import me.dessie.twitchminecraft.Events.JoinListener;
-import me.dessie.twitchminecraft.Events.SubscribeEvent;
-import me.dessie.twitchminecraft.WebServer.TwitchHandler;
-import me.dessie.twitchminecraft.WebServer.WebServer;
+import me.dessie.twitchminecraft.commands.*;
+import me.dessie.twitchminecraft.events.JoinListener;
+import me.dessie.twitchminecraft.events.SubscribeEvent;
+import me.dessie.twitchminecraft.webserver.TwitchHandler;
+import me.dessie.twitchminecraft.webserver.WebServer;
 import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
@@ -20,21 +20,18 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class TwitchMinecraft extends JavaPlugin {
 
     public Permission permission;
     public WebServer webServer;
     public String channelID;
-
-    public Map<String, TwitchHandler> handlers = new HashMap<>();
 
     public File twitchData = new File(getDataFolder() + "/twitchdata.yml");
     public File htmlFolder = new File(getDataFolder(), "webserver");
@@ -112,6 +109,15 @@ public class TwitchMinecraft extends JavaPlugin {
         }
 
         return new JsonParser().parse(content.toString()).getAsJsonObject();
+    }
+
+    public static Map<String, String> getParams(String request) {
+        if(request == null || !request.contains("&")) return new HashMap<>();
+
+        String[] requests = request.split("&");
+
+        return Arrays.stream(requests).collect(Collectors.toMap(
+                (value) -> value.split("=")[0], (value) -> value.split("=")[1]));
     }
 
     public static String formatExpiry(String expiry) {

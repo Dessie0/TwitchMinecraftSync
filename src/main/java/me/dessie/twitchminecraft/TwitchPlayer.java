@@ -4,9 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -15,31 +13,35 @@ import java.util.stream.Collectors;
 public class TwitchPlayer {
 
     private static TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
+    private static final List<TwitchPlayer> players = new ArrayList<>();
     public static List<String> subbedList = plugin.twitchConfig.getStringList("hasSubbed");
 
-    OfflinePlayer player;
-    String channelID;
-    String channelName;
-    String expires;
-    String refreshToken;
-    int tier;
-    int streak;
+    private OfflinePlayer player;
+    private String channelID;
+    private String channelName;
+    private String expirationDate;
+    private String refreshToken;
+    private int tier;
+    private int streak;
 
-    String logoURL;
+    private String logoURL;
 
     //Create the instance.
     public TwitchPlayer(Player player) {
         this.player = player;
+        players.add(this);
     }
 
     public TwitchPlayer(OfflinePlayer player, String channelID, String channelName, String expires, String refreshToken, int tier, int streak) {
         this.player = player;
         this.channelID = channelID;
         this.channelName = channelName;
-        this.expires = expires;
+        this.expirationDate = expires;
         this.refreshToken = refreshToken;
         this.tier = tier;
         this.streak = streak;
+
+        players.add(this);
     }
 
     public int getTier() { return tier; }
@@ -47,7 +49,7 @@ public class TwitchPlayer {
     public OfflinePlayer getPlayer() { return player; }
     public String getChannelID() { return channelID; }
     public String getChannelName() { return channelName; }
-    public String getExpires() { return expires; }
+    public String getExpirationDate() { return expirationDate; }
     public String getUuid() { return player.getUniqueId().toString(); }
     public String getName() { return player.getName(); }
     public String getRefreshToken() { return refreshToken; }
@@ -55,18 +57,26 @@ public class TwitchPlayer {
 
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     public void setTier(int tier) { this.tier = tier; }
-    public void setExpires(String expires) { this.expires = expires; }
+    public void setExpirationDate(String expires) { this.expirationDate = expires; }
     public void setChannelID(String channelID) { this.channelID = channelID; }
     public void setChannelName(String channelName) { this.channelName = channelName; }
     public void setStreak(int streak) { this.streak = streak; }
     public void setLogoURL(String logoURL) { this.logoURL = logoURL; }
+
+    public static List<TwitchPlayer> getPlayers() {
+        return players;
+    }
+
+    public static TwitchPlayer getFromUUID(String uuid) {
+        return players.stream().filter(handler -> handler.getUuid().equals(uuid)).findAny().orElse(null);
+    }
 
     public void saveData(boolean isSubbed) {
         if(isSubbed) {
             plugin.twitchConfig.set(this.getUuid() + ".name", this.getName());
             plugin.twitchConfig.set(this.getUuid() + ".channelID", this.channelID);
             plugin.twitchConfig.set(this.getUuid() + ".channelName", this.channelName);
-            plugin.twitchConfig.set(this.getUuid() + ".expires", this.expires);
+            plugin.twitchConfig.set(this.getUuid() + ".expires", this.expirationDate);
             plugin.twitchConfig.set(this.getUuid() + ".tier", this.tier);
             plugin.twitchConfig.set(this.getUuid() + ".refreshToken", this.refreshToken);
             plugin.twitchConfig.set(this.getUuid() + ".streak", this.streak);

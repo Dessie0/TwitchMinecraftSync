@@ -1,7 +1,7 @@
-package me.dessie.twitchminecraft.Commands;
+package me.dessie.twitchminecraft.commands;
 
 import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.WebServer.WebServer;
+import me.dessie.twitchminecraft.webserver.WebServer;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;

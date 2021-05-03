@@ -1,4 +1,4 @@
-package me.dessie.twitchminecraft.Commands;
+package me.dessie.twitchminecraft.commands;
 
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import org.bukkit.command.Command;

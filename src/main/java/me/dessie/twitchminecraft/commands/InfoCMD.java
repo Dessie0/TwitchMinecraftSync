@@ -1,4 +1,4 @@
-package me.dessie.twitchminecraft.Commands;
+package me.dessie.twitchminecraft.commands;
 
 import me.dessie.twitchminecraft.TwitchMinecraft;
 import me.dessie.twitchminecraft.TwitchPlayer;
@@ -8,7 +8,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -46,14 +45,14 @@ public class InfoCMD implements CommandExecutor {
                         }
                     }
 
-                    TwitchPlayer twitchPlayer = TwitchPlayer.create(player);
+                    TwitchPlayer twitchPlayer = TwitchPlayer.create(player.getUniqueId().toString());
 
                     sender.sendMessage(plugin.color("&7&m----------&dTwitchSync&7&m----------"));
                     sender.sendMessage(plugin.color("&dPlayer Name: &a") + twitchPlayer.getName());
                     sender.sendMessage(plugin.color("&dTwitch Name: &a") + twitchPlayer.getChannelName());
                     sender.sendMessage(plugin.color("&dSubscription Tier: &a") + twitchPlayer.getTier());
                     sender.sendMessage(plugin.color("&dStreak: &a") + twitchPlayer.getStreak());
-                    sender.sendMessage(plugin.color("&dExpires On: &a") + TwitchMinecraft.formatExpiry(twitchPlayer.getExpires()));
+                    sender.sendMessage(plugin.color("&dExpires On: &a") + TwitchMinecraft.formatExpiry(twitchPlayer.getExpirationDate()));
                     sender.sendMessage(plugin.color("&7&m----------&dTwitchSync&7&m----------"));
 
                     return true;

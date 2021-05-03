@@ -1,4 +1,4 @@
-package me.dessie.twitchminecraft.WebServer;
+package me.dessie.twitchminecraft.webserver;
 
 import com.google.gson.JsonObject;
 import me.dessie.twitchminecraft.TwitchMinecraft;
@@ -7,25 +7,27 @@ import me.dessie.twitchminecraft.TwitchPlayer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TwitchHandler extends WebServer {
 
+    private static final List<TwitchHandler> handlers = new ArrayList<>();
+
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
-    private InetAddress playerIP;
 
     TwitchPlayer twitchPlayer;
 
     //Used to resync.
-    public TwitchHandler(TwitchPlayer player, InetAddress playerIP) {
+    public TwitchHandler(TwitchPlayer player) {
         this.twitchPlayer = player;
-        this.playerIP = playerIP;
+        handlers.add(this);
     }
 
-    public InetAddress getPlayerIP() { return playerIP; }
     public TwitchPlayer getTwitchPlayer() { return twitchPlayer; }
+    public static List<TwitchHandler> getHandlers() { return handlers; }
 
     public boolean checkIfSubbed(String accessToken, String userID) {
         String stringURL = "https://api.twitch.tv/kraken/users/" + userID + "/subscriptions/" + plugin.channelID;
@@ -50,7 +52,7 @@ public class TwitchHandler extends WebServer {
                 streak++;
             }
             twitchPlayer.setStreak(streak);
-            twitchPlayer.setExpires(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(twitchPlayer.getStreak()).toString());
+            twitchPlayer.setExpirationDate(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(twitchPlayer.getStreak()).toString());
 
             //We're done checking, so save all their new data.
             twitchPlayer.saveData(true);
@@ -119,7 +121,7 @@ public class TwitchHandler extends WebServer {
                 "?client_id=" + plugin.getConfig().getString("clientID") +
                 "&client_secret=" + plugin.getConfig().getString("clientSecret") +
                 "&code=" + code + "&grant_type=authorization_code" +
-                "&redirect_uri=" + plugin.getConfig().getString("redirectURI");
+                "&redirect_uri=https://twitchmcsync.com";
 
         try {
             URL url = new URL(stringURL);
