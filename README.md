@@ -23,6 +23,28 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 
 ### :package: Installation / Download
 
+#### Gradle
+```groovy
+maven {
+  url "https://maven.pkg.github.com/dessie0/twitchminecraftsync"
+}
+
+dependencies {
+  compileOnly 'com.twitchmcsync:twitchminecraftsync:1.2.0'
+}
+```
+
+#### Maven
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.twitchmcsync</groupId>
+    <artifactId>twitchminecraftsync</artifactId>
+    <version>1.2.0</version>
+  </dependency>
+</dependencies>
+```
+
 #### Manual
 [Download JAR](https://github.com/Dessie0/TwitchMinecraftSync/releases)
 

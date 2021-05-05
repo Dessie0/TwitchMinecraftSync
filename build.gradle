@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'maven-publish'
 }
 
 group 'com.twitchmcsync'
@@ -23,6 +24,28 @@ repositories {
     }
 }
 
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/dessie0/twitchminecraftsync")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+
+            }
+        }
+    }
+
+    publications {
+        gpr(MavenPublication) {
+            groupId 'com.twitchmcsync'
+            artifactId 'twitchminecraftsync'
+            from(components.java)
+        }
+    }
+}
+
 dependencies {
     compileOnly "com.github.MilkBowl:VaultAPI:1.7"
     compileOnly "org.spigotmc:spigot:1.16.4-R0.1-SNAPSHOT"
@@ -31,7 +54,7 @@ dependencies {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'me.dessie.twitchminecraft.TwitchMinecraft'
+        attributes 'Main-Class': 'com.twitchmcsync.twitchminecraft.TwitchMinecraft'
     }
 
     from configurations.runtime.collect { zipTree(it) }

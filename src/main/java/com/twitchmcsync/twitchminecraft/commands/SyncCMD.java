@@ -9,9 +9,14 @@ import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
-public class SyncCMD implements CommandExecutor {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class SyncCMD implements TabExecutor {
 
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
 
@@ -24,13 +29,12 @@ public class SyncCMD implements CommandExecutor {
                 ComponentBuilder builder = new ComponentBuilder();
 
                 //If the user should be forced to verify their Twitch account.
-                boolean force = args.length > 0 && args[0].equalsIgnoreCase("true");
+                boolean force = args.length > 0 && args[0].equalsIgnoreCase("force");
 
                 String url = "https://twitchmcsync.com?client_id=" + plugin.getConfig().getString("clientID")
                         + "&redirect_uri=" + plugin.getConfig().getString("redirectURI")
                         + "&response=send_to_twitch" + (force ? "&force_verify=true" : "")
-                        + "&uuid=" + player.getUniqueId().toString()
-                        + "&channel=" + plugin.getConfig().getString("channelName");
+                        + "&uuid=" + player.getUniqueId().toString();
 
                 builder.append("Click ").color(ChatColor.GREEN)
                         .append("here").color(ChatColor.LIGHT_PURPLE).event(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
@@ -44,7 +48,17 @@ public class SyncCMD implements CommandExecutor {
                 return true;
             }
         }
-
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
+        if(command.getName().equalsIgnoreCase("sync")) {
+            if(sender instanceof Player && args.length == 1) {
+                return Collections.singletonList("force");
+            }
+        }
+
+        return new ArrayList<>();
     }
 }
