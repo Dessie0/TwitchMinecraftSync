@@ -5,7 +5,7 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 1. Go to https://dev.twitch.tv/console/apps and click "Register Your Application"
 2. Give your application a name. Be aware this will be shown to users.
 3. Add an OAuth Redirect URL of `https://twitchmcsync.com` and set the Category as `Game Integration`
-4. Click `Manage` on you newly created Application and copy your Client ID, and generate a new Client Secret. Save both, you will need these later.
+4. Click `Manage` on your newly created Application and copy your Client ID, and generate a new Client Secret. Save both, you will need these later.
 5. Place `TwitchMinecraftSync.jar` in your `/plugins` folder and restart the server.
 6. Navigate to `/plugins/TwitchMinecraftSync/config.yml` and paste in the Client ID and Client Secret.
 7. Type your Twitch username in `channelName`
