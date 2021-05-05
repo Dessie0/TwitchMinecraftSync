@@ -21,6 +21,11 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 
 ## :newspaper: API
 
+### :package: Installation / Download
+
+#### Manual
+[Download JAR](https://github.com/Dessie0/TwitchMinecraftSync/releases)
+
 ### API Events
 
 TwitchMinecraftSync adds four events to listen to.
