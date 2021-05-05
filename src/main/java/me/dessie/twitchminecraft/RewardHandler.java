@@ -5,9 +5,7 @@ import org.bukkit.command.CommandSender;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class RewardHandler {
 
@@ -38,7 +36,6 @@ public class RewardHandler {
                     .stream().filter(role -> role.length() > 0)
                     .forEach(role -> {
                         plugin.permission.playerRemoveGroup(null, player.getPlayer(), role);
-                        System.out.println("Removing role: " + role);
                     });
 
             //Re-add the role based on their re-sub tier.
@@ -50,7 +47,6 @@ public class RewardHandler {
             //Dispatch all the commands
             Map<String, CommandSender> commands = getResubCommands(player);
             for(String command : commands.keySet()) {
-                System.out.println("Dispatching: " + command);
                 Bukkit.dispatchCommand(commands.get(command), command);
             }
         });
@@ -64,7 +60,7 @@ public class RewardHandler {
             }
 
             //Dispatch all the commands
-            Map<String, CommandSender> commands = getRevokeCommands(player);
+            Map<String, CommandSender> commands = getExpireCommands(player);
             for(String command : commands.keySet()) {
                 Bukkit.dispatchCommand(commands.get(command), command);
             }
@@ -78,7 +74,7 @@ public class RewardHandler {
 
     public static Map<String, CommandSender> getGiveCommands(TwitchPlayer player) { return getCommands(player, "subscribe"); }
     public static Map<String, CommandSender> getResubCommands(TwitchPlayer player) { return getCommands(player, "resubscribe"); }
-    public static Map<String, CommandSender> getRevokeCommands(TwitchPlayer player) { return getCommands(player, "expire"); }
+    public static Map<String, CommandSender> getExpireCommands(TwitchPlayer player) { return getCommands(player, "expire"); }
 
     //Get all the commands in the tier.
     //Replace all placeholders where necessary

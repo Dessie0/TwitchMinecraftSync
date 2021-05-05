@@ -4,8 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import me.dessie.twitchminecraft.commands.*;
 import me.dessie.twitchminecraft.events.JoinListener;
-import me.dessie.twitchminecraft.events.SubscribeEvent;
-import me.dessie.twitchminecraft.webserver.TwitchHandler;
 import me.dessie.twitchminecraft.webserver.WebServer;
 import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
@@ -29,18 +27,22 @@ import java.util.stream.Collectors;
 
 public class TwitchMinecraft extends JavaPlugin {
 
+    private static TwitchMinecraft instance;
+
     public Permission permission;
     public WebServer webServer;
     public String channelID;
 
-    public File twitchData = new File(getDataFolder() + "/twitchdata.yml");
     public File htmlFolder = new File(getDataFolder(), "webserver");
     public File indexFile = new File(getDataFolder(), "webserver" + File.separator + "index.html");
 
-    public FileConfiguration twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
+    private static File twitchData;
+    private static FileConfiguration twitchConfig;
 
     @Override
     public void onEnable() {
+        instance = this;
+
         webServer = new WebServer();
         setupPermissions();
         saveDefaultConfig();
@@ -58,7 +60,6 @@ public class TwitchMinecraft extends JavaPlugin {
         getChannelID();
 
         getServer().getPluginManager().registerEvents(new JoinListener(), this);
-        getServer().getPluginManager().registerEvents(new SubscribeEvent(), this);
     }
 
     @Override
@@ -153,6 +154,7 @@ public class TwitchMinecraft extends JavaPlugin {
     }
 
     public void createFiles() {
+        loadFiles();
         if(!twitchData.exists()) {
             saveResource(twitchData.getName(), false);
         }
@@ -182,7 +184,12 @@ public class TwitchMinecraft extends JavaPlugin {
         }
     }
 
-    public void saveFile(File file, FileConfiguration fconf) {
+    public static void loadFiles() {
+        twitchData = new File(getInstance().getDataFolder() + "/twitchdata.yml");
+        twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
+    }
+
+    public static void saveFile(File file, FileConfiguration fconf) {
         try{
             fconf.save(file);
         } catch (IOException e) {
@@ -198,8 +205,19 @@ public class TwitchMinecraft extends JavaPlugin {
         return (permission != null);
     }
 
-    public String color(String s) {
+    public static String color(String s) {
         return ChatColor.translateAlternateColorCodes('&', s);
     }
 
+    public static File getTwitchData() {
+        return twitchData;
+    }
+
+    public static FileConfiguration getTwitchConfig() {
+        return twitchConfig;
+    }
+
+    public static TwitchMinecraft getInstance() {
+        return instance;
+    }
 }

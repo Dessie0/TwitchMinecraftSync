@@ -24,9 +24,9 @@ public class ReloadCMD implements CommandExecutor {
                 //Reload the channel ID.
                 plugin.getChannelID();
 
-                sender.sendMessage(plugin.color("&aSuccessfully reloaded configuration files."));
+                sender.sendMessage(TwitchMinecraft.color("&aSuccessfully reloaded configuration files."));
 
-            } else sender.sendMessage(plugin.color("&cYou do not have permission to do that!"));
+            } else sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
 
             return true;
         }

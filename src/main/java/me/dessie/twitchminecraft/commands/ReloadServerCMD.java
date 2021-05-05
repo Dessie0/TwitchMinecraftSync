@@ -18,17 +18,17 @@ public class ReloadServerCMD implements CommandExecutor {
             if (sender.hasPermission("twitchmcsync.twitchserverreload")) {
 
                 Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-                    sender.sendMessage(plugin.color("&aStopping WebServer on port &d" + plugin.webServer.server.getAddress().getPort()));
+                    sender.sendMessage(TwitchMinecraft.color("&aStopping WebServer on port &d" + plugin.webServer.server.getAddress().getPort()));
                     //Stop the webserver.
                     plugin.webServer.remove();
 
-                    sender.sendMessage(plugin.color("&aStarting new WebServer on port &d" + plugin.getConfig().getInt("port")));
+                    sender.sendMessage(TwitchMinecraft.color("&aStarting new WebServer on port &d" + plugin.getConfig().getInt("port")));
                     plugin.webServer = new WebServer();
                     plugin.webServer.create(plugin.getConfig().getInt("port"));
 
-                    sender.sendMessage(plugin.color("&aSuccessfully restarted the WebServer."));
+                    sender.sendMessage(TwitchMinecraft.color("&aSuccessfully restarted the WebServer."));
                 });
-            } else sender.sendMessage(plugin.color("&cYou do not have permission to do that!"));
+            } else sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
 
             return true;
         }

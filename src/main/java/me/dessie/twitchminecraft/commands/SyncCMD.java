@@ -39,7 +39,7 @@ public class SyncCMD implements CommandExecutor {
                 player.spigot().sendMessage(builder.create());
 
                 //Create a TwitchHandler for this sync.
-                new TwitchHandler(TwitchPlayer.getFromUUID(player.getUniqueId().toString()));
+                new TwitchHandler(new TwitchPlayer(player));
 
                 return true;
             }

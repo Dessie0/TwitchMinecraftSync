@@ -2,6 +2,7 @@ package me.dessie.twitchminecraft.webserver;
 
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.*;
+import me.dessie.twitchminecraft.RewardHandler;
 import me.dessie.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
 import me.dessie.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
 import me.dessie.twitchminecraft.TwitchMinecraft;
@@ -94,7 +95,7 @@ public class WebServer implements HttpHandler {
                 String logoURL = handler.getLogoURL(accessToken);
                 handler.getTwitchPlayer().setLogoURL(logoURL);
 
-                if (TwitchPlayer.playerExists(handler.getTwitchPlayer().getUuid())) {
+                if (TwitchPlayer.isSubbed(handler.getTwitchPlayer().getUuid())) {
                     //Create the TwitchPlayer from their saved info.
                     TwitchPlayer saved = TwitchPlayer.create(handler.getTwitchPlayer().getUuid());
 
@@ -107,7 +108,7 @@ public class WebServer implements HttpHandler {
                     if (!TwitchPlayer.accountUsed(handler.getTwitchPlayer().getChannelID())) {
 
                         //Check if they've previously subbed.
-                        boolean hasSubbed = TwitchPlayer.subbedList.contains(handler.getTwitchPlayer().getUuid());
+                        boolean hasSubbed = TwitchPlayer.getSubbedList().contains(handler.getTwitchPlayer().getUuid());
 
                         if (handler.checkIfSubbed(accessToken, userID)) {
                             Bukkit.getScheduler().runTask(plugin, () -> {
@@ -115,11 +116,26 @@ public class WebServer implements HttpHandler {
                                 //Calls Resubscribe if they have subbed in the past.
                                 //Calls Subscribe if they haven't.
                                 if(hasSubbed) {
-                                    Bukkit.getPluginManager().callEvent(new TwitchResubscribeEvent(handler.getTwitchPlayer()));
-                                    responses.put(code, new Response(Responses.RESUBBED, handler.getTwitchPlayer()));
+                                    TwitchResubscribeEvent event = new TwitchResubscribeEvent(handler.getTwitchPlayer());
+                                    Bukkit.getPluginManager().callEvent(event);
+                                    if(!event.isCancelled()) {
+                                        RewardHandler.giveResub(event.getTwitchPlayer());
+                                        TwitchPlayer.clearData(event.getTwitchPlayer().getUuid());
+                                        responses.put(code, new Response(Responses.RESUBBED, handler.getTwitchPlayer()));
+                                    } else {
+                                        responses.put(code, new Response(Responses.FAILED, handler.getTwitchPlayer()));
+                                    }
+
                                 } else {
-                                    Bukkit.getPluginManager().callEvent(new TwitchSubscribeEvent(handler.getTwitchPlayer()));
-                                    responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
+                                    TwitchSubscribeEvent event = new TwitchSubscribeEvent(handler.getTwitchPlayer());
+                                    Bukkit.getPluginManager().callEvent(event);
+                                    if(!event.isCancelled()) {
+                                        RewardHandler.give(event.getTwitchPlayer());
+                                        TwitchPlayer.clearData(event.getTwitchPlayer().getUuid());
+                                        responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
+                                    } else {
+                                        responses.put(code, new Response(Responses.FAILED, handler.getTwitchPlayer()));
+                                    }
                                 }
                             });
                         } else responses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
