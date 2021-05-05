@@ -1,8 +1,8 @@
-package me.dessie.twitchminecraft.webserver;
+package com.twitchmcsync.twitchminecraft.webserver;
 
 import com.google.gson.JsonObject;
-import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

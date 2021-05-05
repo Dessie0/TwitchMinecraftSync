@@ -1,4 +1,4 @@
-package me.dessie.twitchminecraft;
+package com.twitchmcsync.twitchminecraft;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;

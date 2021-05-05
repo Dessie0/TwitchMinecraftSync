@@ -1,7 +1,6 @@
-package me.dessie.twitchminecraft.events.twitchminecraft;
+package com.twitchmcsync.twitchminecraft.events.twitchminecraft;
 
-import me.dessie.twitchminecraft.TwitchPlayer;
-import org.bukkit.event.Cancellable;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 

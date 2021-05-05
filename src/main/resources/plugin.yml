@@ -1,7 +1,7 @@
 name: TwitchMinecraftSync
 author: Dessie
 version: 1.2.0
-main: me.dessie.twitchminecraft.TwitchMinecraft
+main: com.twitchmcsync.twitchminecraft.TwitchMinecraft
 
 api-version: 1.16
 depend:

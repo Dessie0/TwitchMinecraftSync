@@ -1,11 +1,9 @@
-package me.dessie.twitchminecraft;
+package com.twitchmcsync.twitchminecraft;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;

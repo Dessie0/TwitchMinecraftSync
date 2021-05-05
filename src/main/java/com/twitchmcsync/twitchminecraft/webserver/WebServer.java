@@ -1,12 +1,12 @@
-package me.dessie.twitchminecraft.webserver;
+package com.twitchmcsync.twitchminecraft.webserver;
 
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.*;
-import me.dessie.twitchminecraft.RewardHandler;
-import me.dessie.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
-import me.dessie.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
-import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.RewardHandler;
+import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
+import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
 import org.bukkit.Bukkit;
 
 import java.io.*;

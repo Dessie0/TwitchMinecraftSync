@@ -1,12 +1,11 @@
-package me.dessie.twitchminecraft.events;
+package com.twitchmcsync.twitchminecraft.events;
 
-import me.dessie.twitchminecraft.commands.RevokeCMD;
-import me.dessie.twitchminecraft.events.twitchminecraft.TwitchExpireEvent;
-import me.dessie.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
-import me.dessie.twitchminecraft.RewardHandler;
-import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.TwitchPlayer;
-import me.dessie.twitchminecraft.webserver.TwitchHandler;
+import com.twitchmcsync.twitchminecraft.RewardHandler;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchExpireEvent;
+import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
+import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
+import com.twitchmcsync.twitchminecraft.webserver.TwitchHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -16,7 +15,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 public class JoinListener implements Listener {

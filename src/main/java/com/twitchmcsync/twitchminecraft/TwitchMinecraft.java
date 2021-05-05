@@ -1,10 +1,10 @@
-package me.dessie.twitchminecraft;
+package com.twitchmcsync.twitchminecraft;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import me.dessie.twitchminecraft.commands.*;
-import me.dessie.twitchminecraft.events.JoinListener;
-import me.dessie.twitchminecraft.webserver.WebServer;
+import com.twitchmcsync.twitchminecraft.commands.*;
+import com.twitchmcsync.twitchminecraft.events.JoinListener;
+import com.twitchmcsync.twitchminecraft.webserver.WebServer;
 import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;

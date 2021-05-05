@@ -1,8 +1,8 @@
-package me.dessie.twitchminecraft.commands;
+package com.twitchmcsync.twitchminecraft.commands;
 
-import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.TwitchPlayer;
-import me.dessie.twitchminecraft.webserver.TwitchHandler;
+import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.webserver.TwitchHandler;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.ComponentBuilder;

@@ -1,20 +1,16 @@
-package me.dessie.twitchminecraft.commands;
+package com.twitchmcsync.twitchminecraft.commands;
 
-import me.dessie.twitchminecraft.RewardHandler;
-import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.TwitchPlayer;
-import me.dessie.twitchminecraft.events.twitchminecraft.TwitchRevokeEvent;
+import com.twitchmcsync.twitchminecraft.RewardHandler;
+import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchRevokeEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.List;
 
 public class RevokeCMD implements CommandExecutor {
 

@@ -20,7 +20,10 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 - [`Vault`](https://www.spigotmc.org/resources/vault.34315/)
 
 ## :newspaper: API
-TwitchMinecraftSync adds three events to listen to.
+
+### API Events
+
+TwitchMinecraftSync adds four events to listen to.
 
 [`TwitchSubscribeEvent`](https://github.com/Dessie0/TwitchMinecraftSync/blob/master/src/main/java/me/dessie/twitchminecraft/events/twitchminecraft/TwitchSubscribeEvent.java), 
 [`TwitchResubscribeEvent`](https://github.com/Dessie0/TwitchMinecraftSync/blob/master/src/main/java/me/dessie/twitchminecraft/events/twitchminecraft/TwitchResubscribeEvent.java),

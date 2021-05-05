@@ -1,16 +1,12 @@
-package me.dessie.twitchminecraft.commands;
+package com.twitchmcsync.twitchminecraft.commands;
 
-import me.dessie.twitchminecraft.TwitchMinecraft;
-import me.dessie.twitchminecraft.TwitchPlayer;
+import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
+import com.twitchmcsync.twitchminecraft.TwitchPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.ConfigurationSection;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 public class InfoCMD implements CommandExecutor {
 
