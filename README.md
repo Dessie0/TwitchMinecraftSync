@@ -16,7 +16,7 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 9. Restart your server and you should be good to go!
 
 ## :books: Requirements
-- Java 8
+- Java 17
 - [`Vault`](https://www.spigotmc.org/resources/vault.34315/)
 
 ## :newspaper: API
@@ -30,7 +30,7 @@ maven {
 }
 
 dependencies {
-  compileOnly 'com.twitchmcsync:twitchminecraftsync:1.2.0'
+  compile 'com.twitchmcsync:twitchminecraftsync:1.2.2'
 }
 ```
 
@@ -40,7 +40,7 @@ dependencies {
   <dependency>
     <groupId>com.twitchmcsync</groupId>
     <artifactId>twitchminecraftsync</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.2</version>
   </dependency>
 </dependencies>
 ```

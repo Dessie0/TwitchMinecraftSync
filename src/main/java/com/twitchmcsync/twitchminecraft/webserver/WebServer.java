@@ -7,6 +7,7 @@ import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
 import com.twitchmcsync.twitchminecraft.TwitchPlayer;
 import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
 import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
+import com.twitchmcsync.twitchminecraft.lang.DateFormatter;
 import org.bukkit.Bukkit;
 
 import java.io.*;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 public class WebServer implements HttpHandler {
 
@@ -70,7 +72,7 @@ public class WebServer implements HttpHandler {
     }
 
     public void handlePlayer(HttpExchange httpExchange) {
-        Map<String, String> params = TwitchMinecraft.getParams(httpExchange.getRequestURI().getRawQuery());
+        Map<String, String> params = getParams(httpExchange.getRequestURI().getRawQuery());
 
         String code = params.get("code");
 
@@ -158,6 +160,20 @@ public class WebServer implements HttpHandler {
         }
     }
 
+    /**
+     * Returns a parameter map from a request.
+     * @param request The URL that was sent to the WebServer
+     * @return A Map with the parameter key and values.
+     */
+    public static Map<String, String> getParams(String request) {
+        if(request == null || !request.contains("&")) return new HashMap<>();
+
+        String[] requests = request.split("&");
+
+        return Arrays.stream(requests).collect(Collectors.toMap(
+                (value) -> value.split("=")[0], (value) -> value.split("=")[1]));
+    }
+
     class Response {
         Responses responses;
         TwitchPlayer twitchPlayer;
@@ -191,12 +207,12 @@ class TwitchResponseHandler implements HttpHandler {
         if (code.equalsIgnoreCase("null")) {
             json.addProperty("response_type", WebServer.Responses.FAILED.toString());
         } else {
-            WebServer.Response response = plugin.webServer.responses.get(code);
+            WebServer.Response response = plugin.getWebServer().responses.get(code);
 
             json.addProperty("response_type", response.getResponses().toString());
             //Remove this from the map.
             if (response.getResponses() != WebServer.Responses.WAITING) {
-                plugin.webServer.responses.remove(code);
+                plugin.getWebServer().responses.remove(code);
                 if (response.getResponses() != WebServer.Responses.FAILED) {
                     //Set all the TwitchPlayer information.
                     //This depends on which response we got.
@@ -207,8 +223,6 @@ class TwitchResponseHandler implements HttpHandler {
 
                     if (response.getResponses() != WebServer.Responses.NOT_SUBBED) {
                         json.addProperty("tier", response.getTwitchPlayer().getTier());
-                        json.addProperty("expires", TwitchMinecraft.formatExpiry(response.getTwitchPlayer().getExpirationDate()));
-                        json.addProperty("streak", response.getTwitchPlayer().getStreak());
                     }
                 }
             }

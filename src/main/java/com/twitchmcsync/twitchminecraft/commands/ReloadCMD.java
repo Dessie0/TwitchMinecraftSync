@@ -11,21 +11,19 @@ public class ReloadCMD implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
         if (command.getName().equalsIgnoreCase("twitchreload")) {
             if (sender.hasPermission("twitchmcsync.twitchreload")) {
 
-                //Load the custom files in.
+                //Reload the custom files.
                 plugin.createFiles();
 
                 //Reload the config.yml.
                 plugin.reloadConfig();
 
                 //Reload the channel ID.
-                plugin.getChannelID();
+                plugin.retrieveChannelID();
 
                 sender.sendMessage(TwitchMinecraft.color("&aSuccessfully reloaded configuration files."));
-
             } else sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
 
             return true;

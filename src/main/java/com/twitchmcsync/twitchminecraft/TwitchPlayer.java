@@ -17,11 +17,9 @@ public class TwitchPlayer {
     private OfflinePlayer player;
     private String channelID;
     private String channelName;
-    private String expirationDate;
     private String lastSubDate;
     private String refreshToken;
     private int tier;
-    private int streak;
 
     private String logoURL;
 
@@ -41,30 +39,21 @@ public class TwitchPlayer {
      * @param player The player object this TwitchPlayer is for.
      * @param channelID The Twitch channel ID
      * @param channelName The Twitch username
-     * @param expires The expiration string
      * @param refreshToken The refresh token for this user
      * @param tier The tier of this subscription
-     * @param streak The streak of this subscription
      */
-    public TwitchPlayer(OfflinePlayer player, String channelID, String channelName, String expires, String refreshToken, int tier, int streak) {
+    public TwitchPlayer(OfflinePlayer player, String channelID, String channelName, String refreshToken, int tier) {
         this.player = player;
         this.channelID = channelID;
         this.channelName = channelName;
-        this.expirationDate = expires;
         this.refreshToken = refreshToken;
         this.tier = tier;
-        this.streak = streak;
     }
 
     /**
      * @return The current Twitch Subscription tier this user has.
      */
     public int getTier() { return tier; }
-
-    /**
-     * @return Their current subscription streak
-     */
-    public int getStreak() { return streak; }
 
     /**
      * @return The player related to this TwitchPlayer
@@ -80,11 +69,6 @@ public class TwitchPlayer {
      * @return The Twitch username of this object
      */
     public String getChannelName() { return channelName; }
-
-    /**
-     * @return When the subscription expires.
-     */
-    public String getExpirationDate() { return expirationDate; }
 
     /**
      * @return The UUID of the player
@@ -113,10 +97,8 @@ public class TwitchPlayer {
 
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     public void setTier(int tier) { this.tier = tier; }
-    public void setExpirationDate(String expires) { this.expirationDate = expires; }
     public void setChannelID(String channelID) { this.channelID = channelID; }
     public void setChannelName(String channelName) { this.channelName = channelName; }
-    public void setStreak(int streak) { this.streak = streak; }
     public void setLogoURL(String logoURL) { this.logoURL = logoURL; }
     public void setLastSubDate(String lastSubDate) { this.lastSubDate = lastSubDate; }
 
@@ -131,10 +113,8 @@ public class TwitchPlayer {
     public void saveData(boolean isSubbed) {
         String path = this.getUuid();
         if(isSubbed) {
-            TwitchMinecraft.getTwitchConfig().set(path + ".expires", this.getExpirationDate());
             TwitchMinecraft.getTwitchConfig().set(path + ".tier", this.getTier());
             TwitchMinecraft.getTwitchConfig().set(path + ".refreshToken", this.getRefreshToken());
-            TwitchMinecraft.getTwitchConfig().set(path + ".streak", this.getStreak());
 
             //Add them to the hasSubbed list if they're not already in it.
             if(!subbedList.contains(this.getUuid())) {
@@ -163,7 +143,7 @@ public class TwitchPlayer {
     }
 
     /**
-     * @param channelID
+     * @param channelID The Twitch channel ID
      * @return If the Twitch account by channel ID is currently in use.
      */
     public static boolean accountUsed(String channelID) {
@@ -198,7 +178,7 @@ public class TwitchPlayer {
             keys = TwitchMinecraft.getTwitchConfig().getConfigurationSection("data").getKeys(false);
         }
 
-        keys.removeIf(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key) == null);
+        keys.removeIf(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key) == null || TwitchMinecraft.getTwitchConfig().getConfigurationSection(key).getString("channelName") == null);
 
         List<String> uuid = keys.stream()
                 .filter(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key).getString("channelName").equalsIgnoreCase(channelName))
@@ -236,10 +216,8 @@ public class TwitchPlayer {
         return new TwitchPlayer(Bukkit.getOfflinePlayer(UUID.fromString(uuid)),
                 TwitchMinecraft.getTwitchConfig().getString(uuid + ".channelID"),
                 TwitchMinecraft.getTwitchConfig().getString(uuid + ".channelName"),
-                TwitchMinecraft.getTwitchConfig().getString(uuid + ".expires"),
                 TwitchMinecraft.getTwitchConfig().getString(uuid + ".refreshToken"),
-                TwitchMinecraft.getTwitchConfig().getInt(uuid + ".tier"),
-                TwitchMinecraft.getTwitchConfig().getInt(uuid + ".streak"));
+                TwitchMinecraft.getTwitchConfig().getInt(uuid + ".tier"));
     }
 
     /**

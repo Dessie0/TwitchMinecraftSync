@@ -14,8 +14,8 @@ public class RewardHandler {
     public static void give(TwitchPlayer player) {
         Bukkit.getScheduler().runTask(plugin, () -> {
             String role = getGiveRole(player.getTier());
-            if(role.length() > 0) {
-                plugin.permission.playerAddGroup(null, player.getPlayer(), role);
+            if(role.length() > 0 && TwitchMinecraft.isVaultEnabled()) {
+                plugin.getPermission().playerAddGroup(null, player.getPlayer(), role);
             }
 
             //Dispatch all the commands
@@ -32,16 +32,18 @@ public class RewardHandler {
             //This will be re-applied after, but we want to make
             //sure that we're not duplicating roles if they
             //upgraded their tier.
-            Arrays.asList(getResubRole(1), getResubRole(2), getResubRole(3))
-                    .stream().filter(role -> role.length() > 0)
-                    .forEach(role -> {
-                        plugin.permission.playerRemoveGroup(null, player.getPlayer(), role);
-                    });
+            if(TwitchMinecraft.isVaultEnabled()) {
+                Arrays.asList(getResubRole(1), getResubRole(2), getResubRole(3))
+                        .stream().filter(role -> role.length() > 0)
+                        .forEach(role -> {
+                            plugin.getPermission().playerRemoveGroup(null, player.getPlayer(), role);
+                        });
 
-            //Re-add the role based on their re-sub tier.
-            String role = getResubRole(player.getTier());
-            if(role.length() > 0) {
-                plugin.permission.playerAddGroup(null, player.getPlayer(), role);
+                //Re-add the role based on their re-sub tier.
+                String role = getResubRole(player.getTier());
+                if(role.length() > 0) {
+                    plugin.getPermission().playerAddGroup(null, player.getPlayer(), role);
+                }
             }
 
             //Dispatch all the commands
@@ -55,8 +57,8 @@ public class RewardHandler {
     public static void remove(TwitchPlayer player) {
         Bukkit.getScheduler().runTask(plugin, () -> {
             String role = getRemoveRole(player.getTier());
-            if(role.length() > 0) {
-                plugin.permission.playerRemoveGroup(null, player.getPlayer(), role);
+            if(role.length() > 0 && TwitchMinecraft.isVaultEnabled()) {
+                plugin.getPermission().playerRemoveGroup(null, player.getPlayer(), role);
             }
 
             //Dispatch all the commands

@@ -1,10 +1,11 @@
 name: TwitchMinecraftSync
 author: Dessie
-version: 1.2.0
+version: 1.2.2
 main: com.twitchmcsync.twitchminecraft.TwitchMinecraft
 
-api-version: 1.16
-depend:
+api-version: 1.18
+softdepend:
+  - floodgate
   - Vault
 
 commands:

@@ -4,51 +4,60 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.twitchmcsync.twitchminecraft.commands.*;
 import com.twitchmcsync.twitchminecraft.events.JoinListener;
+import com.twitchmcsync.twitchminecraft.lang.Language;
 import com.twitchmcsync.twitchminecraft.webserver.WebServer;
 import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
+import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.libs.org.apache.commons.io.FileUtils;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 public class TwitchMinecraft extends JavaPlugin {
 
     private static TwitchMinecraft instance;
 
-    public Permission permission;
-    public WebServer webServer;
-    public String channelID;
+    private Permission permission;
+    private WebServer webServer;
+    private String channelID;
 
     public File htmlFolder = new File(getDataFolder(), "webserver");
     public File indexFile = new File(getDataFolder(), "webserver" + File.separator + "index.html");
 
+    private Language language;
+
     private static File twitchData;
     private static FileConfiguration twitchConfig;
+
+    private static boolean floodGateEnabled;
+    private static boolean vaultEnabled;
+
+    private String appAccess;
+
 
     @Override
     public void onEnable() {
         instance = this;
 
-        webServer = new WebServer();
-        setupPermissions();
+        //Hook into Floodgate and Vault.
+        floodGateEnabled = this.getServer().getPluginManager().isPluginEnabled("floodgate");
+        vaultEnabled = setupPermissions();
+
+        //Create the WebServer for hosting the local website.
+        this.webServer = new WebServer();
+
+        loadFiles();
         saveDefaultConfig();
         createFiles();
 
-        webServer.create(getConfig().getInt("port"));
+        this.webServer.create(getConfig().getInt("port"));
 
         getCommand("sync").setExecutor(new SyncCMD());
         getCommand("revoke").setExecutor(new RevokeCMD());
@@ -57,31 +66,51 @@ public class TwitchMinecraft extends JavaPlugin {
         getCommand("twitchserverreload").setExecutor(new ReloadServerCMD());
 
         //Get the channel ID of the channel we're check for subs.
-        getChannelID();
+        retrieveChannelID();
 
         getServer().getPluginManager().registerEvents(new JoinListener(), this);
     }
 
     @Override
     public void onDisable() {
-        webServer.remove();
+        this.webServer.remove();
     }
 
-    public void getChannelID() {
+    /**
+     * Retrieves the Channel ID of the Twitch User from Twitch.
+     */
+    public void retrieveChannelID() {
         Bukkit.getLogger().info("[TwitchMinecraftSync] Getting Channel ID for " + getConfig().getString("channelName"));
 
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+
+            String clientId = this.getConfig().getString("clientID");
+            String clientSecret = this.getConfig().getString("clientSecret");
+
             try {
-                URL url = new URL("https://api.twitch.tv/kraken/users?login=" + getConfig().getString("channelName"));
+                URL url = new URL("https://id.twitch.tv/oauth2/token?client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=client_credentials");
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+
+                JsonObject json = getJsonObject(con.getInputStream());
+                this.appAccess = json.get("access_token").getAsString();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                URL url = new URL("https://api.twitch.tv/helix/users?login=" + getConfig().getString("channelName"));
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
                 con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
                 con.setRequestProperty("Client-ID", getConfig().getString("clientID"));
+                con.setRequestProperty("Authorization", "Bearer " + this.appAccess);
+
                 con.setRequestMethod("GET");
 
                 try {
                     JsonObject json = getJsonObject(con.getInputStream());
-                    channelID = json.get("users").getAsJsonArray().get(0).getAsJsonObject().get("_id").getAsString();
+                    this.channelID = json.get("data").getAsJsonArray().get(0).getAsJsonObject().get("id").getAsString();
                 } catch (IndexOutOfBoundsException | IOException e) {
                     Bukkit.getLogger().severe("[TwitchMinecraftSync] Invalid Twitch channel name or Client ID.");
                 }
@@ -94,80 +123,55 @@ public class TwitchMinecraft extends JavaPlugin {
     }
 
     public JsonObject getJsonObject(InputStream stream) {
-        StringBuilder content = new StringBuilder();
-
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(stream));
-            String inputLine;
-            while ((inputLine = in.readLine()) != null) {
-                content.append(inputLine);
-            }
-
+            JsonObject object = new JsonParser().parse(in).getAsJsonObject();
             in.close();
 
+            return object;
         } catch (IOException e) {
             e.printStackTrace();
+            return null;
         }
-
-        return new JsonParser().parse(content.toString()).getAsJsonObject();
     }
 
-    public static Map<String, String> getParams(String request) {
-        if(request == null || !request.contains("&")) return new HashMap<>();
-
-        String[] requests = request.split("&");
-
-        return Arrays.stream(requests).collect(Collectors.toMap(
-                (value) -> value.split("=")[0], (value) -> value.split("=")[1]));
+    /**
+     * Restarts the WebServer
+     */
+    public void restartWebServer() {
+        this.getWebServer().remove();
+        this.getWebServer().create(this.getConfig().getInt("port"));
     }
 
-    public static String formatExpiry(String expiry) {
-        ZonedDateTime time = ZonedDateTime.parse(expiry);
-        StringBuilder formatted = new StringBuilder();
+    public Language getLanguage() {
+        return language;
+    }
+    public Permission getPermission() {
+        return permission;
+    }
+    public WebServer getWebServer() {
+        return webServer;
+    }
+    public String getChannelID() {
+        return channelID;
+    }
 
-        String month = time.getMonth().toString().substring(0, 1) + time.getMonth().toString().substring(1).toLowerCase();
-
-        formatted.append(month)
-                .append(" ")
-                .append(time.getDayOfMonth())
-                .append(", ")
-                .append(time.getYear())
-                .append(" at ");
-
-        String hour;
-        if (time.getHour() < 10) {
-            hour = "0" + time.getHour();
-        } else {
-            hour = String.valueOf(time.getHour());
-        }
-
-        String minute;
-        if (time.getMinute() < 10) {
-            minute = "0" + time.getMinute();
-        } else {
-            minute = String.valueOf(time.getMinute());
-        }
-
-        formatted.append(hour).append(":").append(minute);
-
-        return formatted.toString();
+    public String getAppAccess() {
+        return appAccess;
     }
 
     public void createFiles() {
-        loadFiles();
+        //Create the files if they do not exist.
         if(!twitchData.exists()) {
             saveResource(twitchData.getName(), false);
         }
 
-        try {
-            twitchConfig.load(twitchData);
-        } catch (InvalidConfigurationException | IOException e) {
-            e.printStackTrace();
+        if(!this.getLanguage().getLangFile().exists()) {
+            saveResource(this.getLanguage().getLangFile().getName(), false);
         }
 
         if(!htmlFolder.exists()) {
             htmlFolder.mkdirs();
-
             try {
                 //Copy the zip file.
                 FileUtils.copyInputStreamToFile(this.getResource("serverdisplay.zip"), new File(getDataFolder() + "/webserver/serverdisplay.zip"));
@@ -182,11 +186,19 @@ public class TwitchMinecraft extends JavaPlugin {
                 e.printStackTrace();
             }
         }
+
+        //Load the configurations.
+        this.loadFiles();
     }
 
-    public static void loadFiles() {
+    public void loadFiles() {
+        this.language = new Language();
+
         twitchData = new File(getInstance().getDataFolder() + "/twitchdata.yml");
         twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
+
+        //Load the Language Configuration
+        this.getLanguage().loadConfig();
     }
 
     public static void saveFile(File file, FileConfiguration fconf) {
@@ -198,26 +210,26 @@ public class TwitchMinecraft extends JavaPlugin {
     }
 
     private boolean setupPermissions() {
-        RegisteredServiceProvider<Permission> permissionProvider = getServer().getServicesManager().getRegistration(net.milkbowl.vault.permission.Permission.class);
-        if (permissionProvider != null) {
-            permission = permissionProvider.getProvider();
+        RegisteredServiceProvider<Permission> rsp = getServer().getServicesManager().getRegistration(Permission.class);
+        if(rsp == null) {
+            return false;
         }
-        return (permission != null);
+
+        permission = rsp.getProvider();
+        return true;
     }
 
     public static String color(String s) {
         return ChatColor.translateAlternateColorCodes('&', s);
     }
 
-    public static File getTwitchData() {
-        return twitchData;
-    }
-
+    public static File getTwitchData() {return twitchData;}
     public static FileConfiguration getTwitchConfig() {
         return twitchConfig;
     }
-
     public static TwitchMinecraft getInstance() {
         return instance;
     }
+    public static boolean isFloodGateEnabled() {return floodGateEnabled;}
+    public static boolean isVaultEnabled() {return vaultEnabled;}
 }

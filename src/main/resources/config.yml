@@ -1,6 +1,6 @@
 clientID: "<Your client ID>"
 clientSecret: "<Your client secret>"
-channelName: "<Channel to check for subscriptions>"
+channelName: "<Twitch username>"
 redirectURI: "http://localhost:8080"
 port: 8080
 

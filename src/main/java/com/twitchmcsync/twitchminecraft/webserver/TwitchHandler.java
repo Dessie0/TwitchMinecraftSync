@@ -17,8 +17,7 @@ public class TwitchHandler extends WebServer {
     private static final List<TwitchHandler> handlers = new ArrayList<>();
 
     private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
-
-    TwitchPlayer twitchPlayer;
+    private final TwitchPlayer twitchPlayer;
 
     //Used to resync.
     public TwitchHandler(TwitchPlayer player) {
@@ -30,29 +29,27 @@ public class TwitchHandler extends WebServer {
     public static List<TwitchHandler> getHandlers() { return handlers; }
 
     public boolean checkIfSubbed(String accessToken, String userID) {
-        String stringURL = "https://api.twitch.tv/kraken/users/" + userID + "/subscriptions/" + plugin.channelID;
-
+        String stringURL = "https://api.twitch.tv/helix/subscriptions/user?user_id=" + userID + "&broadcaster_id=" + plugin.getChannelID();
         try {
             URL url = new URL(stringURL);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
             con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
             con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
-            con.setRequestProperty("Authorization", "OAuth " + accessToken);
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
             con.setRequestMethod("GET");
 
-            JsonObject json = plugin.getJsonObject(con.getInputStream());
+            JsonObject json = plugin.getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject();
 
             twitchPlayer.setTier(setTier(json));
 
             //They're still subbed, so we can add to their streak.
-            int streak = 1;
-            while(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(streak).isBefore(ZonedDateTime.now())) {
-                streak++;
-            }
-            twitchPlayer.setStreak(streak);
-            twitchPlayer.setExpirationDate(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(twitchPlayer.getStreak()).toString());
+//            int streak = 1;
+//            while(ZonedDateTime.parse(json.get("created_at").getAsString()).plusMonths(streak).isBefore(ZonedDateTime.now())) {
+//                streak++;
+//            }
+//            twitchPlayer.setStreak(streak);
 
             //We're done checking, so save all their new data.
             twitchPlayer.saveData(true);
@@ -74,19 +71,19 @@ public class TwitchHandler extends WebServer {
 
     public String getUserID(String accessToken) {
         try {
-            URL url = new URL("https://api.twitch.tv/kraken/user");
+            URL url = new URL("https://api.twitch.tv/helix/users");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
             con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
             con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
-            con.setRequestProperty("Authorization", "OAuth " + accessToken);
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
             con.setRequestMethod("GET");
 
-            JsonObject json = plugin.getJsonObject(con.getInputStream());
+            JsonObject json = plugin.getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject();
 
-            twitchPlayer.setChannelID(json.get("_id").getAsString());
-            twitchPlayer.setChannelName(json.get("name").getAsString());
+            twitchPlayer.setChannelID(json.get("id").getAsString());
+            twitchPlayer.setChannelName(json.get("login").getAsString());
 
             return twitchPlayer.getChannelID();
 
@@ -99,16 +96,16 @@ public class TwitchHandler extends WebServer {
 
     public String getLogoURL(String accessToken) {
         try {
-            URL url = new URL("https://api.twitch.tv/kraken/user");
+            URL url = new URL("https://api.twitch.tv/helix/users");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
             con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
             con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
-            con.setRequestProperty("Authorization", "OAuth " + accessToken);
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
             con.setRequestMethod("GET");
 
-            return plugin.getJsonObject(con.getInputStream()).get("logo").getAsString();
+            return plugin.getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject().get("profile_image_url").getAsString();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -163,7 +160,7 @@ public class TwitchHandler extends WebServer {
     }
 
     public int setTier(JsonObject json) {
-        switch (json.get("sub_plan").getAsInt()) {
+        switch (json.get("tier").getAsInt()) {
             case 1000: return 1;
             case 2000: return 2;
             case 3000: return 3;
