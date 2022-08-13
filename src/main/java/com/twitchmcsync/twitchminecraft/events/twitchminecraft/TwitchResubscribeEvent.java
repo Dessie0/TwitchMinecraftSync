@@ -11,7 +11,6 @@ public class TwitchResubscribeEvent extends Event implements Cancellable {
     private final TwitchPlayer twitchPlayer;
     private boolean cancelled;
 
-
     public TwitchResubscribeEvent(TwitchPlayer twitchPlayer) {
         this.twitchPlayer = twitchPlayer;
     }

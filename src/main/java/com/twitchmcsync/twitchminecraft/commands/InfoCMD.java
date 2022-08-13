@@ -2,7 +2,6 @@ package com.twitchmcsync.twitchminecraft.commands;
 
 import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
 import com.twitchmcsync.twitchminecraft.TwitchPlayer;
-import com.twitchmcsync.twitchminecraft.lang.DateFormatter;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -10,8 +9,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 public class InfoCMD implements CommandExecutor {
-
-    private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {

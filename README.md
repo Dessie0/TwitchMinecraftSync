@@ -30,7 +30,7 @@ maven {
 }
 
 dependencies {
-  compile 'com.twitchmcsync:twitchminecraftsync:1.2.2'
+  compile 'com.twitchmcsync:twitchminecraftsync:1.2.3'
 }
 ```
 
@@ -40,7 +40,7 @@ dependencies {
   <dependency>
     <groupId>com.twitchmcsync</groupId>
     <artifactId>twitchminecraftsync</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
   </dependency>
 </dependencies>
 ```
@@ -197,6 +197,10 @@ rewards:
 - `/tinfo <user>` - Displays information regarding a user's current sync status. (twitchmcsync.tinfo)
 - `/twitchreload` - Reloads the configuration. (twitchmcsync.twitchreload)
 - `/twitchserverreload` - Reloads the WebServer. (twitchmcsync.twitchserverreload)
+
+## :bug: Known Bugs
+- Resubscribe Commands are fired everytime a Player joins the server. Unfortunately, this is a result of a Twitch's Helix API limitation where the endpoint does not provide an expiration date or streak to applications. 
+This means that tracking when a user subscribed (and therefore resubscribed) is impossible. If you wish to help have this feature added back to the API, please upvote [here](https://twitch.uservoice.com/forums/310213-developers/suggestions/44874949-re-add-created-at-streak-and-or-expires-to-check)
 
 ## :eyeglasses: Advanced
 #### Webserver Configuration

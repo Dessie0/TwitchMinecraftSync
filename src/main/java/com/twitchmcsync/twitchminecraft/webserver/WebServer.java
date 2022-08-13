@@ -1,42 +1,51 @@
 package com.twitchmcsync.twitchminecraft.webserver;
 
 import com.google.gson.JsonObject;
-import com.sun.net.httpserver.*;
-import com.twitchmcsync.twitchminecraft.RewardHandler;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 import com.twitchmcsync.twitchminecraft.TwitchMinecraft;
 import com.twitchmcsync.twitchminecraft.TwitchPlayer;
 import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchResubscribeEvent;
 import com.twitchmcsync.twitchminecraft.events.twitchminecraft.TwitchSubscribeEvent;
-import com.twitchmcsync.twitchminecraft.lang.DateFormatter;
 import org.bukkit.Bukkit;
 
-import java.io.*;
-import java.net.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 public class WebServer implements HttpHandler {
 
-    public HttpServer server;
-    ThreadPoolExecutor threadPoolExecutor;
-    private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
+    private final TwitchMinecraft plugin;
+    private HttpServer server;
+    private ThreadPoolExecutor threadPoolExecutor;
 
     //Where key is their code, and the value is the current response. Updated in the handle() below.
     //Entries are removed when the client requests it & the response is either a fail or success (not waiting)
-    Map<String, Response> responses = new HashMap<>();
+    private final Map<String, Response> responses = new HashMap<>();
+
+    public WebServer(TwitchMinecraft plugin) {
+        this.plugin = plugin;
+    }
 
     public void create(int port) {
         try {
-            server = HttpServer.create(new InetSocketAddress(port), 0);
-            server.createContext("/", this);
-            server.createContext("/twitchresponse", new TwitchResponseHandler());
-            threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+            this.server = HttpServer.create(new InetSocketAddress(port), 0);
+            this.threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
-            server.setExecutor(threadPoolExecutor);
-            server.start();
+            this.getServer().createContext("/", this);
+            this.getServer().createContext("/twitchresponse", new TwitchResponseHandler(this.getPlugin()));
+            this.getServer().setExecutor(threadPoolExecutor);
+            this.getServer().start();
 
             Bukkit.getLogger().info("[TwitchMinecraftSync] Server started on port " + port);
 
@@ -54,15 +63,15 @@ public class WebServer implements HttpHandler {
     public void handle(HttpExchange httpExchange) throws IOException {
         //Serve the index.html if necessary
         if(httpExchange.getRequestURI().toString().contains("?code") || httpExchange.getRequestURI().toString().equalsIgnoreCase("/")) {
-            httpExchange.sendResponseHeaders(200, plugin.indexFile.length());
+            httpExchange.sendResponseHeaders(200, this.getPlugin().indexFile.length());
             OutputStream os = httpExchange.getResponseBody();
-            Files.copy(plugin.indexFile.toPath(), os);
+            Files.copy(this.getPlugin().indexFile.toPath(), os);
             os.close();
 
             handlePlayer(httpExchange);
         } else {
             //Serve other files as they are references in the index.html
-            File file = new File(plugin.getDataFolder() + "/webserver" + httpExchange.getRequestURI().toString());
+            File file = new File(this.getPlugin().getDataFolder() + "/webserver" + httpExchange.getRequestURI().toString());
 
             httpExchange.sendResponseHeaders(200, file.length());
             OutputStream os = httpExchange.getResponseBody();
@@ -77,7 +86,7 @@ public class WebServer implements HttpHandler {
         String code = params.get("code");
 
         if(!params.containsKey("uuid")) {
-            responses.put(code, new Response(Responses.FAILED, null));
+            this.getResponses().put(code, new Response(Responses.FAILED, null));
         }
 
         String uuid = params.get("uuid");
@@ -85,11 +94,11 @@ public class WebServer implements HttpHandler {
         Optional<TwitchHandler> optionalHandler = TwitchHandler.getHandlers().stream()
                 .filter(handle -> handle.getTwitchPlayer().getUuid().equalsIgnoreCase(uuid)).findAny();
 
-        responses.put(code, new Response(Responses.WAITING, null));
+        this.getResponses().put(code, new Response(Responses.WAITING, null));
         if(optionalHandler.isPresent()) {
             TwitchHandler handler = optionalHandler.get();
 
-            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            Bukkit.getScheduler().runTaskAsynchronously(this.getPlugin(), () -> {
                 //Get the access token
                 String accessToken = handler.getAccessToken(code);
 
@@ -104,7 +113,7 @@ public class WebServer implements HttpHandler {
                     //Update the logoURL for the new TwitchPlayer.
                     saved.setLogoURL(logoURL);
 
-                    responses.put(code, new Response(Responses.ALREADY_CLAIMED, saved));
+                    this.getResponses().put(code, new Response(Responses.ALREADY_CLAIMED, saved));
                 } else {
                     String userID = handler.getUserID(accessToken);
                     if (!TwitchPlayer.accountUsed(handler.getTwitchPlayer().getChannelID())) {
@@ -113,7 +122,7 @@ public class WebServer implements HttpHandler {
                         boolean hasSubbed = TwitchPlayer.getSubbedList().contains(handler.getTwitchPlayer().getUuid());
 
                         if (handler.checkIfSubbed(accessToken, userID)) {
-                            Bukkit.getScheduler().runTask(plugin, () -> {
+                            Bukkit.getScheduler().runTask(this.getPlugin(), () -> {
                                 //Call the respective event
                                 //Calls Resubscribe if they have subbed in the past.
                                 //Calls Subscribe if they haven't.
@@ -121,26 +130,26 @@ public class WebServer implements HttpHandler {
                                     TwitchResubscribeEvent event = new TwitchResubscribeEvent(handler.getTwitchPlayer());
                                     Bukkit.getPluginManager().callEvent(event);
                                     if(!event.isCancelled()) {
-                                        RewardHandler.giveResub(event.getTwitchPlayer());
-                                        TwitchPlayer.clearData(event.getTwitchPlayer().getUuid());
-                                        responses.put(code, new Response(Responses.RESUBBED, handler.getTwitchPlayer()));
+                                        TwitchMinecraft.getInstance().getRewardHandler().giveResub(event.getTwitchPlayer());
+                                        event.getTwitchPlayer().clearData();
+                                        this.getResponses().put(code, new Response(Responses.RESUBBED, handler.getTwitchPlayer()));
                                     } else {
-                                        responses.put(code, new Response(Responses.FAILED, handler.getTwitchPlayer()));
+                                        this.getResponses().put(code, new Response(Responses.FAILED, handler.getTwitchPlayer()));
                                     }
 
                                 } else {
                                     TwitchSubscribeEvent event = new TwitchSubscribeEvent(handler.getTwitchPlayer());
                                     Bukkit.getPluginManager().callEvent(event);
                                     if(!event.isCancelled()) {
-                                        RewardHandler.give(event.getTwitchPlayer());
-                                        TwitchPlayer.clearData(event.getTwitchPlayer().getUuid());
-                                        responses.put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
+                                        TwitchMinecraft.getInstance().getRewardHandler().give(event.getTwitchPlayer());
+                                        event.getTwitchPlayer().clearData();
+                                        this.getResponses().put(code, new Response(Responses.CLAIMED, handler.getTwitchPlayer()));
                                     } else {
-                                        responses.put(code, new Response(Responses.FAILED, handler.getTwitchPlayer()));
+                                        this.getResponses().put(code, new Response(Responses.FAILED, handler.getTwitchPlayer()));
                                     }
                                 }
                             });
-                        } else responses.put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
+                        } else this.getResponses().put(code, new Response(Responses.NOT_SUBBED, handler.getTwitchPlayer()));
                     } else {
                         //Create the TwitchPlayer from the player who owns this account.
                         TwitchPlayer created = TwitchPlayer.create(TwitchPlayer.getUUIDFromChannelName(handler.getTwitchPlayer().getChannelName()));
@@ -148,7 +157,7 @@ public class WebServer implements HttpHandler {
                         //Set the logoURL for the new TwitchPlayer.
                         created.setLogoURL(logoURL);
 
-                        responses.put(code, new Response(Responses.ACCOUNT_USED, created));
+                        this.getResponses().put(code, new Response(Responses.ACCOUNT_USED, created));
                     }
                 }
             });
@@ -156,8 +165,20 @@ public class WebServer implements HttpHandler {
             TwitchHandler.getHandlers().remove(handler);
         } else {
             //No handler?
-            responses.put(code, new Response(Responses.FAILED, null));
+            this.getResponses().put(code, new Response(Responses.FAILED, null));
         }
+    }
+
+    public TwitchMinecraft getPlugin() {
+        return plugin;
+    }
+
+    public HttpServer getServer() {
+        return server;
+    }
+
+    public Map<String, Response> getResponses() {
+        return responses;
     }
 
     /**
@@ -175,8 +196,8 @@ public class WebServer implements HttpHandler {
     }
 
     class Response {
-        Responses responses;
-        TwitchPlayer twitchPlayer;
+        private final Responses responses;
+        private final TwitchPlayer twitchPlayer;
         Response(Responses responses, TwitchPlayer twitchPlayer) {
             this.responses = responses;
             this.twitchPlayer = twitchPlayer;
@@ -194,7 +215,11 @@ public class WebServer implements HttpHandler {
 //Is called whenever the <URI>/twitchresponse is pinged from the JavaScript.
 class TwitchResponseHandler implements HttpHandler {
 
-    private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
+    private final TwitchMinecraft plugin;
+
+    public TwitchResponseHandler(TwitchMinecraft plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public void handle(HttpExchange httpExchange) throws IOException {
@@ -207,12 +232,12 @@ class TwitchResponseHandler implements HttpHandler {
         if (code.equalsIgnoreCase("null")) {
             json.addProperty("response_type", WebServer.Responses.FAILED.toString());
         } else {
-            WebServer.Response response = plugin.getWebServer().responses.get(code);
+            WebServer.Response response = this.getPlugin().getWebServer().getResponses().get(code);
 
             json.addProperty("response_type", response.getResponses().toString());
             //Remove this from the map.
             if (response.getResponses() != WebServer.Responses.WAITING) {
-                plugin.getWebServer().responses.remove(code);
+                this.getPlugin().getWebServer().getResponses().remove(code);
                 if (response.getResponses() != WebServer.Responses.FAILED) {
                     //Set all the TwitchPlayer information.
                     //This depends on which response we got.
@@ -232,5 +257,9 @@ class TwitchResponseHandler implements HttpHandler {
         OutputStream os = httpExchange.getResponseBody();
         os.write(json.toString().getBytes());
         os.close();
+    }
+
+    public TwitchMinecraft getPlugin() {
+        return plugin;
     }
 }

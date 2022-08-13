@@ -8,39 +8,46 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TwitchHandler extends WebServer {
+public class TwitchHandler {
 
     private static final List<TwitchHandler> handlers = new ArrayList<>();
 
-    private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
+    private final TwitchMinecraft plugin;
     private final TwitchPlayer twitchPlayer;
 
     //Used to resync.
     public TwitchHandler(TwitchPlayer player) {
+        this.plugin = player.getPlugin();
         this.twitchPlayer = player;
         handlers.add(this);
     }
 
-    public TwitchPlayer getTwitchPlayer() { return twitchPlayer; }
-    public static List<TwitchHandler> getHandlers() { return handlers; }
+    public TwitchPlayer getTwitchPlayer() {
+        return twitchPlayer;
+    }
+    public static List<TwitchHandler> getHandlers() {
+        return handlers;
+    }
+    public TwitchMinecraft getPlugin() {
+        return plugin;
+    }
 
     public boolean checkIfSubbed(String accessToken, String userID) {
-        String stringURL = "https://api.twitch.tv/helix/subscriptions/user?user_id=" + userID + "&broadcaster_id=" + plugin.getChannelID();
+        String stringURL = "https://api.twitch.tv/helix/subscriptions/user?user_id=" + userID + "&broadcaster_id=" + this.getPlugin().getChannelID();
         try {
             URL url = new URL(stringURL);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
             con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
-            con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
+            con.setRequestProperty("Client-ID", this.getPlugin().getConfig().getString("clientID"));
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
             con.setRequestMethod("GET");
 
-            JsonObject json = plugin.getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject();
+            JsonObject json = this.getPlugin().getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject();
 
             twitchPlayer.setTier(setTier(json));
 
@@ -75,12 +82,12 @@ public class TwitchHandler extends WebServer {
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
             con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
-            con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
+            con.setRequestProperty("Client-ID", this.getPlugin().getConfig().getString("clientID"));
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
             con.setRequestMethod("GET");
 
-            JsonObject json = plugin.getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject();
+            JsonObject json = this.getPlugin().getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject();
 
             twitchPlayer.setChannelID(json.get("id").getAsString());
             twitchPlayer.setChannelName(json.get("login").getAsString());
@@ -100,12 +107,12 @@ public class TwitchHandler extends WebServer {
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
 
             con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
-            con.setRequestProperty("Client-ID", plugin.getConfig().getString("clientID"));
+            con.setRequestProperty("Client-ID", this.getPlugin().getConfig().getString("clientID"));
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
 
             con.setRequestMethod("GET");
 
-            return plugin.getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject().get("profile_image_url").getAsString();
+            return this.getPlugin().getJsonObject(con.getInputStream()).get("data").getAsJsonArray().get(0).getAsJsonObject().get("profile_image_url").getAsString();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -115,8 +122,8 @@ public class TwitchHandler extends WebServer {
 
     public String getAccessToken(String code) {
         String stringURL = "https://id.twitch.tv/oauth2/token" +
-                "?client_id=" + plugin.getConfig().getString("clientID") +
-                "&client_secret=" + plugin.getConfig().getString("clientSecret") +
+                "?client_id=" + this.getPlugin().getConfig().getString("clientID") +
+                "&client_secret=" + this.getPlugin().getConfig().getString("clientSecret") +
                 "&code=" + code + "&grant_type=authorization_code" +
                 "&redirect_uri=https://twitchmcsync.com";
 
@@ -125,7 +132,7 @@ public class TwitchHandler extends WebServer {
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("POST");
 
-            JsonObject json = plugin.getJsonObject(con.getInputStream());
+            JsonObject json = this.getPlugin().getJsonObject(con.getInputStream());
 
             twitchPlayer.setRefreshToken(json.get("refresh_token").getAsString());
 
@@ -140,15 +147,15 @@ public class TwitchHandler extends WebServer {
         String stringURL = "https://id.twitch.tv/oauth2/token" +
                 "?grant_type=refresh_token" +
                 "&refresh_token=" + player.getRefreshToken() +
-                "&client_id=" + plugin.getConfig().getString("clientID") +
-                "&client_secret=" + plugin.getConfig().getString("clientSecret") ;
+                "&client_id=" + this.getPlugin().getConfig().getString("clientID") +
+                "&client_secret=" + this.getPlugin().getConfig().getString("clientSecret") ;
 
         try {
             URL url = new URL(stringURL);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("POST");
 
-            JsonObject json = plugin.getJsonObject(con.getInputStream());
+            JsonObject json = this.getPlugin().getJsonObject(con.getInputStream());
 
             player.setRefreshToken(json.get("refresh_token").getAsString());
 

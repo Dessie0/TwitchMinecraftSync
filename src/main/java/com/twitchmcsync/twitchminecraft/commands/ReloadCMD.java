@@ -7,7 +7,11 @@ import org.bukkit.command.CommandSender;
 
 public class ReloadCMD implements CommandExecutor {
 
-    private TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
+    private final TwitchMinecraft plugin;
+
+    public ReloadCMD(TwitchMinecraft plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -15,13 +19,13 @@ public class ReloadCMD implements CommandExecutor {
             if (sender.hasPermission("twitchmcsync.twitchreload")) {
 
                 //Reload the custom files.
-                plugin.createFiles();
+                this.getPlugin().createFiles();
 
                 //Reload the config.yml.
-                plugin.reloadConfig();
+                this.getPlugin().reloadConfig();
 
                 //Reload the channel ID.
-                plugin.retrieveChannelID();
+                this.getPlugin().retrieveChannelID();
 
                 sender.sendMessage(TwitchMinecraft.color("&aSuccessfully reloaded configuration files."));
             } else sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
@@ -29,5 +33,9 @@ public class ReloadCMD implements CommandExecutor {
             return true;
         }
         return false;
+    }
+
+    public TwitchMinecraft getPlugin() {
+        return plugin;
     }
 }

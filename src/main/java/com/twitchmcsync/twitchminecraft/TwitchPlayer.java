@@ -3,18 +3,18 @@ package com.twitchmcsync.twitchminecraft;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 public class TwitchPlayer {
+    private static final List<String> subbedList = TwitchMinecraft.getInstance().getTwitchConfig().getStringList("hasSubbed");
 
-    private static TwitchMinecraft plugin = TwitchMinecraft.getPlugin(TwitchMinecraft.class);
-    private static final List<String> subbedList = TwitchMinecraft.getTwitchConfig().getStringList("hasSubbed");
-
-    private OfflinePlayer player;
+    private final TwitchMinecraft plugin;
+    private final OfflinePlayer player;
     private String channelID;
     private String channelName;
     private String lastSubDate;
@@ -28,21 +28,23 @@ public class TwitchPlayer {
      * @param player The player to reference
      */
     //Create the instance.
-    public TwitchPlayer(OfflinePlayer player) {
-        this.player = player;
+    public TwitchPlayer(TwitchMinecraft plugin, OfflinePlayer player) {
+        this(plugin, player, null, null, null, 0);
     }
 
     /**
      * Creates a fulfilled TwitchPlayer object.
      * {@link #create(String)} and {@link #create(OfflinePlayer)} for easier usage.
-     * 
+     *
+     * @param plugin The Plugin instance
      * @param player The player object this TwitchPlayer is for.
      * @param channelID The Twitch channel ID
      * @param channelName The Twitch username
      * @param refreshToken The refresh token for this user
      * @param tier The tier of this subscription
      */
-    public TwitchPlayer(OfflinePlayer player, String channelID, String channelName, String refreshToken, int tier) {
+    public TwitchPlayer(TwitchMinecraft plugin, OfflinePlayer player, String channelID, String channelName, String refreshToken, int tier) {
+        this.plugin = plugin;
         this.player = player;
         this.channelID = channelID;
         this.channelName = channelName;
@@ -95,6 +97,13 @@ public class TwitchPlayer {
      */
     public String getLastSubDate() { return lastSubDate; }
 
+    /**
+     * @return The Plugin instance
+     */
+    public TwitchMinecraft getPlugin() {
+        return plugin;
+    }
+
     public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     public void setTier(int tier) { this.tier = tier; }
     public void setChannelID(String channelID) { this.channelID = channelID; }
@@ -113,25 +122,25 @@ public class TwitchPlayer {
     public void saveData(boolean isSubbed) {
         String path = this.getUuid();
         if(isSubbed) {
-            TwitchMinecraft.getTwitchConfig().set(path + ".tier", this.getTier());
-            TwitchMinecraft.getTwitchConfig().set(path + ".refreshToken", this.getRefreshToken());
+            this.getPlugin().getTwitchConfig().set(path + ".tier", this.getTier());
+            this.getPlugin().getTwitchConfig().set(path + ".refreshToken", this.getRefreshToken());
 
             //Add them to the hasSubbed list if they're not already in it.
             if(!subbedList.contains(this.getUuid())) {
                 subbedList.add(this.getUuid());
-                TwitchMinecraft.getTwitchConfig().set("hasSubbed", subbedList);
+                this.getPlugin().getTwitchConfig().set("hasSubbed", subbedList);
             }
         } else {
             path = "data." + this.getUuid();
-            TwitchMinecraft.getTwitchConfig().set(path + ".lastSubDate", this.getLastSubDate());
-            TwitchMinecraft.getTwitchConfig().set(this.getUuid(), null);
+            this.getPlugin().getTwitchConfig().set(path + ".lastSubDate", this.getLastSubDate());
+            this.getPlugin().getTwitchConfig().set(this.getUuid(), null);
         }
 
-        TwitchMinecraft.getTwitchConfig().set(path + ".name", this.getName());
-        TwitchMinecraft.getTwitchConfig().set(path + ".channelID", this.getChannelID());
-        TwitchMinecraft.getTwitchConfig().set(path + ".channelName", this.getChannelName());
+        this.getPlugin().getTwitchConfig().set(path + ".name", this.getName());
+        this.getPlugin().getTwitchConfig().set(path + ".channelID", this.getChannelID());
+        this.getPlugin().getTwitchConfig().set(path + ".channelName", this.getChannelName());
 
-        TwitchMinecraft.saveFile(TwitchMinecraft.getTwitchData(), TwitchMinecraft.getTwitchConfig());
+        TwitchMinecraft.saveFile(this.getPlugin().getTwitchData(), this.getPlugin().getTwitchConfig());
     }
 
     /**
@@ -139,7 +148,7 @@ public class TwitchPlayer {
      * @return If a player is currently synced & subbed.
      */
     public static boolean isSubbed(String uuid) {
-        return TwitchMinecraft.getTwitchConfig().getConfigurationSection(uuid) != null;
+        return TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(uuid) != null;
     }
 
     /**
@@ -147,11 +156,11 @@ public class TwitchPlayer {
      * @return If the Twitch account by channel ID is currently in use.
      */
     public static boolean accountUsed(String channelID) {
-        Set<String> keys = TwitchMinecraft.getTwitchConfig().getConfigurationSection("").getKeys(false);
-        keys.removeIf(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key) == null || TwitchMinecraft.getTwitchConfig().getConfigurationSection(key).getString("channelID") == null);
+        Set<String> keys = TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection("").getKeys(false);
+        keys.removeIf(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key) == null || TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelID") == null);
 
-        return !keys.stream().map(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key).getString("channelID"))
-                .filter(id -> id.equalsIgnoreCase(channelID)).collect(Collectors.toList()).isEmpty();
+        return keys.stream().map(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelID"))
+                .filter(Objects::nonNull).anyMatch(id -> id.equalsIgnoreCase(channelID));
     }
 
     /**
@@ -159,7 +168,7 @@ public class TwitchPlayer {
      * @return If the player has synced their Twitch and Minecraft account at all.
      */
     public static boolean isSynced(String uuid) {
-        return isSubbed(uuid) || TwitchMinecraft.getTwitchConfig().getConfigurationSection("data." + uuid) != null;
+        return isSubbed(uuid) || TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection("data." + uuid) != null;
     }
 
     /**
@@ -173,27 +182,24 @@ public class TwitchPlayer {
     private static String getUUIDFromChannelName(String channelName, boolean subbed) {
         Set<String> keys;
         if(subbed) {
-            keys = TwitchMinecraft.getTwitchConfig().getConfigurationSection("").getKeys(false);
+            keys = TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection("").getKeys(false);
         } else {
-            keys = TwitchMinecraft.getTwitchConfig().getConfigurationSection("data").getKeys(false);
+            keys = TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection("data").getKeys(false);
         }
 
-        keys.removeIf(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key) == null || TwitchMinecraft.getTwitchConfig().getConfigurationSection(key).getString("channelName") == null);
+        keys.removeIf(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key) == null || TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelName") == null);
 
-        List<String> uuid = keys.stream()
-                .filter(key -> TwitchMinecraft.getTwitchConfig().getConfigurationSection(key).getString("channelName").equalsIgnoreCase(channelName))
-                .collect(Collectors.toList());
+        List<String> uuid = keys.stream().filter(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelName").equalsIgnoreCase(channelName)).toList();
 
         return uuid.size() > 0 ? uuid.get(0) : getUUIDFromChannelName(channelName, false);
     }
 
     /**
      * Clears all data from the data section of twitchdata.yml
-     * @param uuid The uuid to clear
      */
-    public static void clearData(String uuid) {
-        TwitchMinecraft.getTwitchConfig().set("data." + uuid, null);
-        TwitchMinecraft.saveFile(TwitchMinecraft.getTwitchData(), TwitchMinecraft.getTwitchConfig());
+    public void clearData() {
+        this.getPlugin().getTwitchConfig().set("data." + this.getUuid(), null);
+        TwitchMinecraft.saveFile(this.getPlugin().getTwitchData(), this.getPlugin().getTwitchConfig());
     }
 
     /**
@@ -211,13 +217,14 @@ public class TwitchPlayer {
      * @return The TwitchPlayer for the player with the specified UUID.
      */
     public static TwitchPlayer create(String uuid) {
-        if(TwitchMinecraft.getTwitchConfig().getConfigurationSection(uuid) == null) return null;
+        FileConfiguration config = TwitchMinecraft.getInstance().getTwitchConfig();
+        if(config.getConfigurationSection(uuid) == null) return null;
 
-        return new TwitchPlayer(Bukkit.getOfflinePlayer(UUID.fromString(uuid)),
-                TwitchMinecraft.getTwitchConfig().getString(uuid + ".channelID"),
-                TwitchMinecraft.getTwitchConfig().getString(uuid + ".channelName"),
-                TwitchMinecraft.getTwitchConfig().getString(uuid + ".refreshToken"),
-                TwitchMinecraft.getTwitchConfig().getInt(uuid + ".tier"));
+        return new TwitchPlayer(TwitchMinecraft.getInstance(), Bukkit.getOfflinePlayer(UUID.fromString(uuid)),
+                config.getString(uuid + ".channelID"),
+                config.getString(uuid + ".channelName"),
+                config.getString(uuid + ".refreshToken"),
+                config.getInt(uuid + ".tier"));
     }
 
     /**
@@ -230,12 +237,12 @@ public class TwitchPlayer {
      * @return A TwitchPlayer object with non-subscriber specific information.
      */
     public static TwitchPlayer createData(String uuid) {
-        ConfigurationSection section = TwitchMinecraft.getTwitchConfig().getConfigurationSection("data." + uuid);
+        ConfigurationSection section = TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection("data." + uuid);
         if(section == null) {
             return create(uuid);
         }
 
-        TwitchPlayer player = new TwitchPlayer(Bukkit.getOfflinePlayer(UUID.fromString(uuid)));
+        TwitchPlayer player = new TwitchPlayer(TwitchMinecraft.getInstance(), Bukkit.getOfflinePlayer(UUID.fromString(uuid)));
         player.setChannelName(section.getString("channelName"));
         player.setChannelID(section.getString("channelID"));
         player.setLastSubDate(section.getString("lastSubDate"));
@@ -249,5 +256,4 @@ public class TwitchPlayer {
     public static List<String> getSubbedList() {
         return subbedList;
     }
-
 }
