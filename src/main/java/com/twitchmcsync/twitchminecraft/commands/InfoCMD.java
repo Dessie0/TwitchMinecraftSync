@@ -49,6 +49,8 @@ public class InfoCMD implements CommandExecutor {
     }
 
     private TwitchPlayer getTwitchPlayer(String uuid) {
+        if(uuid == null) return null;
+
         if(TwitchPlayer.isSubbed(uuid)) {
             return TwitchPlayer.create(uuid);
         } else if(TwitchPlayer.isSynced(uuid)) {

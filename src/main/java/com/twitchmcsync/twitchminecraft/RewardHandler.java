@@ -85,7 +85,6 @@ public class RewardHandler {
         Map<String, CommandSender> commands = new HashMap<>();
 
         for(String command : this.getPlugin().getConfig().getStringList("rewards.tier" + player.getTier() + "." + type + ".commands")) {
-
             command = command.replaceAll("%player%", player.getName());
             command = command.replaceAll("%twitchname%", player.getChannelName());
 

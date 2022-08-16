@@ -27,14 +27,15 @@ public class SyncCMD implements TabExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(command.getName().equalsIgnoreCase("sync")) {
-            if(sender instanceof Player player) {
+            if(sender instanceof Player) {
+                Player player = (Player) sender;
 
                 if(this.getPlugin().getChannelID() == null) {
                     player.sendMessage(TwitchMinecraft.color("&cUnable to sync, plugin is not setup properly!"));
                     return true;
                 }
 
-                ComponentBuilder builder = new ComponentBuilder();
+                ComponentBuilder builder = new ComponentBuilder("");
 
                 //If the user should be forced to verify their Twitch account.
                 boolean force = args.length > 0 && args[0].equalsIgnoreCase("force");

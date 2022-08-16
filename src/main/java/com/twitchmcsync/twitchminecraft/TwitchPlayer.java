@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TwitchPlayer {
     private static final List<String> subbedList = TwitchMinecraft.getInstance().getTwitchConfig().getStringList("hasSubbed");
@@ -189,9 +190,9 @@ public class TwitchPlayer {
 
         keys.removeIf(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key) == null || TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelName") == null);
 
-        List<String> uuid = keys.stream().filter(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelName").equalsIgnoreCase(channelName)).toList();
+        List<String> uuid = keys.stream().filter(key -> TwitchMinecraft.getInstance().getTwitchConfig().getConfigurationSection(key).getString("channelName").equalsIgnoreCase(channelName)).collect(Collectors.toList());
 
-        return uuid.size() > 0 ? uuid.get(0) : getUUIDFromChannelName(channelName, false);
+        return uuid.size() > 0 ? uuid.get(0) : subbed ? getUUIDFromChannelName(channelName, false) : null;
     }
 
     /**

@@ -55,8 +55,10 @@ public class WebServer implements HttpHandler {
     }
 
     public void remove() {
-        server.stop(1);
-        threadPoolExecutor.shutdownNow();
+        if(this.getServer() == null || this.threadPoolExecutor == null) return;
+
+        this.getServer().stop(1);
+        this.threadPoolExecutor.shutdownNow();
     }
 
     @Override

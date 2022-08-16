@@ -8,7 +8,6 @@ import com.twitchmcsync.twitchminecraft.lang.Language;
 import com.twitchmcsync.twitchminecraft.webserver.WebServer;
 import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
-import org.apache.commons.io.FileUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -19,6 +18,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 
 public class TwitchMinecraft extends JavaPlugin {
@@ -162,7 +163,7 @@ public class TwitchMinecraft extends JavaPlugin {
 
     public JsonObject getJsonObject(InputStream stream) throws IOException {
         BufferedReader in = new BufferedReader(new InputStreamReader(stream));
-        JsonObject object = JsonParser.parseReader(in).getAsJsonObject();
+        JsonObject object = new JsonParser().parse(in).getAsJsonObject();
         in.close();
 
         return object;
@@ -207,10 +208,11 @@ public class TwitchMinecraft extends JavaPlugin {
             htmlFolder.mkdirs();
             try {
                 //Copy the zip file.
-                FileUtils.copyInputStreamToFile(this.getResource("serverdisplay.zip"), new File(getDataFolder() + "/webserver/serverdisplay.zip"));
+                Files.copy(this.getResource("serverdisplay.zip"), new File(getDataFolder() + "/webserver/serverdisplay.zip").toPath(), StandardCopyOption.REPLACE_EXISTING);
 
                 //Unzip
-                new ZipFile(getDataFolder() + "/webserver/serverdisplay.zip").extractAll(getDataFolder() + "/webserver");
+                new ZipFile(getDataFolder() + "/webserver/serverdisplay.zip")
+                        .extractAll(getDataFolder() + "/webserver");
 
                 //Delete zip file
                 new File(getDataFolder() + "/webserver/serverdisplay.zip").delete();

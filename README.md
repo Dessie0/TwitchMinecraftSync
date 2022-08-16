@@ -10,13 +10,13 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 6. Navigate to `/plugins/TwitchMinecraftSync/config.yml` and paste in the Client ID and Client Secret.
 7. Type your Twitch username in `channelName`
 8. Set your Redirect URI. This is your server IP and an open port on your server.
-<br>&nbsp;&nbsp;&nbsp;- The Redirect URI should be http://(server ip):(port), for example, http://172:182.52.222:8177
+<br>&nbsp;&nbsp;&nbsp;- The Redirect URI should be http://(server ip):(port), for example, http://172.182.52.222:8177
 <br>&nbsp;&nbsp;&nbsp;- You can open a port on most popular server hosts. 
 <br>&nbsp;&nbsp;&nbsp;- The port is NOT your server port.
 9. Restart your server and you should be good to go!
 
 ## :books: Requirements
-- Java 17
+- Java 8
 - [`Vault`](https://www.spigotmc.org/resources/vault.34315/)
 
 ## :newspaper: API
