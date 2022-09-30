@@ -16,7 +16,7 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 9. Restart your server and you should be good to go!
 
 ## :books: Requirements
-- Java 8
+- Java 17
 - [`Vault`](https://www.spigotmc.org/resources/vault.34315/)
 
 ## :newspaper: API
@@ -30,7 +30,7 @@ maven {
 }
 
 dependencies {
-  compile 'com.twitchmcsync:twitchminecraftsync:1.2.3'
+  compile 'com.twitchmcsync:twitchminecraftsync:1.2.5'
 }
 ```
 
@@ -40,7 +40,7 @@ dependencies {
   <dependency>
     <groupId>com.twitchmcsync</groupId>
     <artifactId>twitchminecraftsync</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.5</version>
   </dependency>
 </dependencies>
 ```
@@ -109,7 +109,7 @@ TwitchMinecraftSync is highly configurable, and you can run any commands when a 
 You can also utilize permission roles that are granted or taken away as needed. Vault is required for this reason. 
 <br><br> Additionally, you can perform different commands and roles for each tier.
 
-The default config.yml can be seen below.
+The default configurations can be seen below.
 
 <details>
     <summary>config.yml</summary>
@@ -188,6 +188,37 @@ rewards:
       commands:
         - say %player% (%twitchname%) has not renewed their subscription :(
         - spawn -p
+```
+</details>
+
+<details>
+    <summary>lang.yml</summary>
+
+```yaml
+join_message: "&d[TwitchMinecraftSync] &cYou're not synced to Twitch! Type /sync to synchronize Twitch and Minecraft!"
+no_permission: "&d[TwitchMinecraftSync] &cYou do not have permission to do that!"
+revoked: "&d[TwitchMinecraftSync] &cYour Twitch authorization has been revoked!\n&d[TwitchMinecraftSync] &cYou can re-sync by typing /sync"
+resync_error: "&d[TwitchMinecraftSync] &cSomething went wrong when attempting to resync your subscription!"
+sub_expired: "&d[TwitchMinecraftSync] &cWe could not confirm that you have resynced your Twitch account!\n&d[TwitchMinecraftSync] &cIf you would like to re-sync, please re-sub and type /sync!"
+unable_to_sync: "&d[TwitchMinecraftSync] &cUnable to sync, plugin is not setup properly!"
+floodgate_type: "&d[TwitchMinecraftSync] &aPlease type this link into a browser to sync your Twitch! &d%url%"
+
+enter_player_argument: "&cYou need to enter a player!"
+no_synced_account: "&cUnable to find a synced account with the name &e%player%"
+
+revoke_success: "&aSuccessfully revoked %player%'s Twitch authorization. They will need to re-sync."
+revoke_offline: "%player% is offline. Their authorization will be revoked when they login."
+
+reload_files: "&aSuccessfully reloaded configuration files."
+stopping_webserver: "&aStopping WebServer on port &d%port%"
+starting_webserver: "&aStarting new WebServer on port &d%port%"
+webserver_restart_success: "&aSuccessfully restarted the WebServer."
+
+info_header: "&7&m----------&dTwitchSync&7&m----------"
+info_footer: "&7&m----------&dTwitchSync&7&m----------"
+info_player_name: "&dPlayer Name: &a%player%"
+info_twitch_name: "&dTwitch Name: &a%twitch%"
+info_subscription_tier: "&dSubscription Tier: &a%tier%"
 ```
 </details>
 

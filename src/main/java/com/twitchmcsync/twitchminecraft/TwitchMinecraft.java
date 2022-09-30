@@ -6,10 +6,10 @@ import com.twitchmcsync.twitchminecraft.commands.*;
 import com.twitchmcsync.twitchminecraft.events.JoinListener;
 import com.twitchmcsync.twitchminecraft.lang.Language;
 import com.twitchmcsync.twitchminecraft.webserver.WebServer;
+import me.dessie.dessielib.storageapi.SpigotStorageAPI;
 import net.lingala.zip4j.ZipFile;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -26,6 +26,7 @@ public class TwitchMinecraft extends JavaPlugin {
 
     private static TwitchMinecraft instance;
 
+    private SpigotStorageAPI storageAPI;
     private Permission permission;
     private WebServer webServer;
     private RewardHandler rewardHandler;
@@ -47,6 +48,9 @@ public class TwitchMinecraft extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+
+        this.storageAPI = SpigotStorageAPI.register(this);
+        this.language = new Language(this);
 
         //Hook into Floodgate and Vault.
         this.floodGateEnabled = this.getServer().getPluginManager().isPluginEnabled("floodgate");
@@ -70,7 +74,7 @@ public class TwitchMinecraft extends JavaPlugin {
 
         this.getCommand("sync").setExecutor(new SyncCMD(this));
         this.getCommand("revoke").setExecutor(new RevokeCMD(this));
-        this.getCommand("tinfo").setExecutor(new InfoCMD());
+        this.getCommand("tinfo").setExecutor(new InfoCMD(this));
         this.getCommand("twitchreload").setExecutor(new ReloadCMD(this));
         this.getCommand("twitchserverreload").setExecutor(new ReloadServerCMD(this));
 
@@ -200,10 +204,6 @@ public class TwitchMinecraft extends JavaPlugin {
             saveResource(twitchData.getName(), false);
         }
 
-        if(!this.getLanguage().getLangFile().exists()) {
-            saveResource(this.getLanguage().getLangFile().getName(), false);
-        }
-
         if(!htmlFolder.exists()) {
             htmlFolder.mkdirs();
             try {
@@ -226,14 +226,13 @@ public class TwitchMinecraft extends JavaPlugin {
         this.loadFiles();
     }
 
-    public void loadFiles() {
-        this.language = new Language();
+    public void reloadLanguage() {
+        this.language = new Language(this);
+    }
 
+    public void loadFiles() {
         twitchData = new File(getInstance().getDataFolder() + "/twitchdata.yml");
         twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
-
-        //Load the Language Configuration
-        this.getLanguage().loadConfig();
     }
 
     public static void saveFile(File file, FileConfiguration fconf) {
@@ -260,15 +259,14 @@ public class TwitchMinecraft extends JavaPlugin {
         }
     }
 
-    public static String color(String s) {
-        return ChatColor.translateAlternateColorCodes('&', s);
-    }
-
     public RewardHandler getRewardHandler() {
         return rewardHandler;
     }
 
-    public File getTwitchData() {return twitchData;}
+    public File getTwitchData() {
+        return twitchData;
+    }
+
     public FileConfiguration getTwitchConfig() {
         return twitchConfig;
     }
@@ -278,6 +276,10 @@ public class TwitchMinecraft extends JavaPlugin {
     }
     public boolean isVaultEnabled() {
         return vaultEnabled;
+    }
+
+    public SpigotStorageAPI getStorageAPI() {
+        return storageAPI;
     }
 
     public static TwitchMinecraft getInstance() {

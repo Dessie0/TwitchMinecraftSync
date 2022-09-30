@@ -5,10 +5,10 @@ plugins {
 }
 
 group 'com.twitchmcsync'
-version '1.2.4'
+version '1.2.5'
 
 java.toolchain {
-    languageVersion = JavaLanguageVersion.of(8)
+    languageVersion = JavaLanguageVersion.of(17)
 }
 
 compileJava.options.encoding = 'UTF-8'
@@ -23,10 +23,6 @@ build.finalizedBy copyJar
 repositories {
     mavenCentral()
     mavenLocal()
-
-    maven {
-        url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
-    }
 
     maven {
         url 'https://repo.opencollab.dev/maven-snapshots/'
@@ -60,12 +56,14 @@ publishing {
 }
 
 dependencies {
-    //compileOnly "org.spigotmc:spigot:1.8.8-R0.1-SNAPSHOT"
-    compileOnly "org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT"
+    compileOnly "org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT"
 
     compileOnly "com.github.MilkBowl:VaultAPI:1.7"
     compileOnly 'org.geysermc.floodgate:api:2.0-SNAPSHOT'
-    implementation 'net.lingala.zip4j:zip4j:2.11.0'
+    implementation 'net.lingala.zip4j:zip4j:2.11.2'
+    implementation 'me.dessie.dessielib.storage-api:spigot:1.3.3'
+
+    annotationProcessor 'me.dessie.dessielib:annotations:1.3.3'
 }
 
 //Used to create the fat jar

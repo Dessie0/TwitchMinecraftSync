@@ -31,7 +31,7 @@ public class SyncCMD implements TabExecutor {
                 Player player = (Player) sender;
 
                 if(this.getPlugin().getChannelID() == null) {
-                    player.sendMessage(TwitchMinecraft.color("&cUnable to sync, plugin is not setup properly!"));
+                    this.getPlugin().getLanguage().sendMessage(player, "unable_to_sync");
                     return true;
                 }
 
@@ -47,7 +47,7 @@ public class SyncCMD implements TabExecutor {
 
                 //Send Bedrock players the link itself. They need to manually type it in.
                 if(this.getPlugin().isFloodGateEnabled() && FloodgateApi.getInstance().isFloodgatePlayer(player.getUniqueId())) {
-                    player.sendMessage(TwitchMinecraft.color("&aPlease type this link into a browser to sync your Twitch! &d") + url);
+                    this.getPlugin().getLanguage().sendMessage(player, "floodgate_type", Collections.singletonMap("url", url));
                 } else {
                     builder.append("Click ").color(ChatColor.GREEN)
                             .append("here").color(ChatColor.LIGHT_PURPLE).event(new ClickEvent(ClickEvent.Action.OPEN_URL, url))

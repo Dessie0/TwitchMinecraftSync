@@ -8,11 +8,18 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import java.util.Collections;
+
 public class InfoCMD implements CommandExecutor {
+
+    private final TwitchMinecraft plugin;
+
+    public InfoCMD(TwitchMinecraft plugin) {
+        this.plugin = plugin;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
         if (command.getName().equalsIgnoreCase("tinfo")) {
             if (sender.hasPermission("twitchmcsync.tinfo")) {
                 if (args.length > 0) {
@@ -27,23 +34,23 @@ public class InfoCMD implements CommandExecutor {
                         //Attempt to get it from a subbed user.
                         tPlayer = getTwitchPlayer(TwitchPlayer.getUUIDFromChannelName(args[0]));
                         if(tPlayer == null) {
-                            sender.sendMessage(TwitchMinecraft.color("&cUnable to find a synced account with the name &e" + args[0]));
+                            this.getPlugin().getLanguage().sendMessage(sender,"no_synced_account", Collections.singletonMap("player", args[0]));
                             return true;
                         }
                     }
 
-                    sender.sendMessage(TwitchMinecraft.color("&7&m----------&dTwitchSync&7&m----------"));
-                    sender.sendMessage(TwitchMinecraft.color("&dPlayer Name: &a") + tPlayer.getName());
-                    sender.sendMessage(TwitchMinecraft.color("&dTwitch Name: &a") + tPlayer.getChannelName());
+                    this.getPlugin().getLanguage().sendMessage(sender, "info_header");
+                    this.getPlugin().getLanguage().sendMessage(sender, "info_player_name", Collections.singletonMap("player", tPlayer.getName()));
+                    this.getPlugin().getLanguage().sendMessage(sender, "info_twitch_name", Collections.singletonMap("twitch", tPlayer.getChannelName()));
                     if(tPlayer.getTier() != 0) {
-                        sender.sendMessage(TwitchMinecraft.color("&dSubscription Tier: &a") + tPlayer.getTier());
+                        this.getPlugin().getLanguage().sendMessage(sender, "info_subscription_tier", Collections.singletonMap("tier", String.valueOf(tPlayer.getTier())));
                     }
 
-                    sender.sendMessage(TwitchMinecraft.color("&7&m----------&dTwitchSync&7&m----------"));
+                    this.getPlugin().getLanguage().sendMessage(sender, "info_footer");
 
                     return true;
-                }else sender.sendMessage(TwitchMinecraft.color("&cYou need to enter a player to get the data from!"));
-            } else sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
+                }else this.getPlugin().getLanguage().sendMessage(sender, "enter_player_argument");
+            } else this.getPlugin().getLanguage().sendMessage(sender, "no_permission");
         }
         return false;
     }
@@ -57,5 +64,9 @@ public class InfoCMD implements CommandExecutor {
             return TwitchPlayer.createData(uuid);
         }
         return null;
+    }
+
+    public TwitchMinecraft getPlugin() {
+        return plugin;
     }
 }

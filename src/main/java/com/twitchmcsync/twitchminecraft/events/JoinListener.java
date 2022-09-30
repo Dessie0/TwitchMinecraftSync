@@ -41,8 +41,7 @@ public class JoinListener implements Listener {
             this.getPlugin().getTwitchConfig().set("revoked." + player.getUniqueId(), null);
             TwitchMinecraft.saveFile(this.getPlugin().getTwitchData(), this.getPlugin().getTwitchConfig());
 
-            player.sendMessage(TwitchMinecraft.color("&cYour Twitch authorization has been revoked!"));
-            player.sendMessage(TwitchMinecraft.color("&cYou can re-sync by typing /sync"));
+            this.getPlugin().getLanguage().sendMessage(player, "revoked");
             return;
         }
 
@@ -64,7 +63,7 @@ public class JoinListener implements Listener {
             }
 
             if(this.getPlugin().getChannelID() != null) {
-                player.sendMessage(TwitchMinecraft.color("&cLooks like you're not synced to Twitch! Use /sync to gain access to the server!"));
+                this.getPlugin().getLanguage().sendMessage(player, "join_message");
             }
             return;
         }
@@ -83,7 +82,7 @@ public class JoinListener implements Listener {
                         this.getPlugin().getRewardHandler().giveResub(resubEvent.getTwitchPlayer());
                         twitchPlayer.clearData();
                     } else {
-                        onlinePlayer.sendMessage(TwitchMinecraft.color("&d[TwitchMinecraftSync] &cSomething went wrong when attempting to resync your subscription!"));
+                        this.getPlugin().getLanguage().sendMessage(onlinePlayer, "resync_error");
                         this.getPlugin().getRewardHandler().remove(handler.getTwitchPlayer());
                     }
                 });
@@ -98,8 +97,7 @@ public class JoinListener implements Listener {
                         handler.getTwitchPlayer().saveData(false);
 
                         this.getPlugin().getRewardHandler().remove(expireEvent.getTwitchPlayer());
-                        onlinePlayer.sendMessage(TwitchMinecraft.color("&d[TwitchMinecraftSync] &cWe could not confirm that you have resynced your Twitch account!"));
-                        onlinePlayer.sendMessage(TwitchMinecraft.color("&d[TwitchMinecraftSync] &cIf you would like to re-sync, please re-sub and type /sync!"));
+                        this.getPlugin().getLanguage().sendMessage(onlinePlayer, "sub_expired");
                     }
                 });
             }

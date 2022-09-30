@@ -12,8 +12,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class TwitchPlayer {
-    private static final List<String> subbedList = TwitchMinecraft.getInstance().getTwitchConfig().getStringList("hasSubbed");
-
     private final TwitchMinecraft plugin;
     private final OfflinePlayer player;
     private String channelID;
@@ -127,7 +125,8 @@ public class TwitchPlayer {
             this.getPlugin().getTwitchConfig().set(path + ".refreshToken", this.getRefreshToken());
 
             //Add them to the hasSubbed list if they're not already in it.
-            if(!subbedList.contains(this.getUuid())) {
+            if(!getSubbedList().contains(this.getUuid())) {
+                List<String> subbedList = getSubbedList();
                 subbedList.add(this.getUuid());
                 this.getPlugin().getTwitchConfig().set("hasSubbed", subbedList);
             }
@@ -255,6 +254,6 @@ public class TwitchPlayer {
      * @return All UUIDs that have been previously synced and subscribed.
      */
     public static List<String> getSubbedList() {
-        return subbedList;
+        return TwitchMinecraft.getInstance().getTwitchConfig().getStringList("hasSubbed");
     }
 }

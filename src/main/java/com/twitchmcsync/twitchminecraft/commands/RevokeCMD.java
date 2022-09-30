@@ -10,6 +10,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 
 public class RevokeCMD implements CommandExecutor {
 
@@ -23,12 +24,12 @@ public class RevokeCMD implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(command.getName().equalsIgnoreCase("revoke")) {
             if(!sender.hasPermission("twitchmcsync.revoke")) {
-                sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
+                this.getPlugin().getLanguage().sendMessage(sender, "no_permission");
                 return true;
             }
 
             if(args.length <= 0) {
-                sender.sendMessage(TwitchMinecraft.color("&cYou need to enter a player to revoke permissions!"));
+                this.getPlugin().getLanguage().sendMessage(sender, "enter_player_argument");
                 return true;
             }
 
@@ -38,17 +39,17 @@ public class RevokeCMD implements CommandExecutor {
 
                 if (player.isOnline()) {
                     this.getPlugin().getRewardHandler().remove(tPlayer);
-                    sender.sendMessage(TwitchMinecraft.color("&aSuccessfully revoked " + player.getName() + "'s Twitch authorization. They will need to re-sync."));
+                    this.getPlugin().getLanguage().sendMessage(sender, "revoke_success", Collections.singletonMap("player", player.getName()));
                 } else {
                     //Save revoke information.
                     this.getPlugin().getTwitchConfig().set("revoked." + player.getUniqueId() + ".tier", tPlayer.getTier());
 
                     TwitchMinecraft.saveFile(this.getPlugin().getTwitchData(), this.getPlugin().getTwitchConfig());
-                    sender.sendMessage(TwitchMinecraft.color("&c" + player.getName() + " is offline. Their authorization will be revoked when they login."));
+                    this.getPlugin().getLanguage().sendMessage(sender, "revoke_offline", Collections.singletonMap("player", player.getName()));
                 }
 
                 this.revoke(player);
-            } else sender.sendMessage(TwitchMinecraft.color("&d" + args[0] + "&c doesn't exist or hasn't synced their Twitch account!"));
+            } else this.getPlugin().getLanguage().sendMessage(sender, "no_synced_account", Collections.singletonMap("player", args[0]));
 
             return true;
         }
@@ -57,8 +58,7 @@ public class RevokeCMD implements CommandExecutor {
 
     private void revoke(OfflinePlayer player) {
         if(player.isOnline()) {
-            player.getPlayer().sendMessage(TwitchMinecraft.color("&cYour Twitch authorization has been revoked!"));
-            player.getPlayer().sendMessage(TwitchMinecraft.color("&cYou can re-sync by typing /sync"));
+            this.getPlugin().getLanguage().sendMessage(player.getPlayer(), "revoked");
         }
 
         TwitchPlayer twitchPlayer = TwitchPlayer.create(player);

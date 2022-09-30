@@ -6,6 +6,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import java.util.Collections;
+
 public class ReloadServerCMD implements CommandExecutor {
 
     private final TwitchMinecraft plugin;
@@ -21,12 +23,13 @@ public class ReloadServerCMD implements CommandExecutor {
             if (sender.hasPermission("twitchmcsync.twitchserverreload")) {
 
                 Bukkit.getScheduler().runTaskAsynchronously(this.getPlugin(), () -> {
-                    sender.sendMessage(TwitchMinecraft.color("&aStopping WebServer on port &d" + this.getPlugin().getWebServer().getServer().getAddress().getPort()));
-                    sender.sendMessage(TwitchMinecraft.color("&aStarting new WebServer on port &d" + this.getPlugin().getConfig().getInt("port")));
+                    this.getPlugin().getLanguage().sendMessage(sender, "stopping_webserver", Collections.singletonMap("port", String.valueOf(this.getPlugin().getWebServer().getServer().getAddress().getPort())));
+                    this.getPlugin().getLanguage().sendMessage(sender, "starting_webserver", Collections.singletonMap("port", String.valueOf(this.getPlugin().getWebServer().getServer().getAddress().getPort())));
                     this.getPlugin().restartWebServer();
-                    sender.sendMessage(TwitchMinecraft.color("&aSuccessfully restarted the WebServer."));
+
+                    this.getPlugin().getLanguage().sendMessage(sender, "webserver_restart_success");
                 });
-            } else sender.sendMessage(TwitchMinecraft.color("&cYou do not have permission to do that!"));
+            } else this.getPlugin().getLanguage().sendMessage(sender, "no_permission");
 
             return true;
         }
