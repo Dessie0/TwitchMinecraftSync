@@ -17,6 +17,7 @@ A Spigot plugin developed for linking Minecraft accounts and Twitch.
 
 ## :books: Requirements
 - Java 21
+- PaperSpigot 1.21.5
 
 ## :newspaper: API
 
