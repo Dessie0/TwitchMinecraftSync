@@ -46,7 +46,7 @@ dependencies {
 ```
 
 #### Manual
-[Download JAR](https://github.com/Dessie0/TwitchMCSync/releases)
+[Download JAR](https://github.com/Dessie0/TwitchMinecraftSync/releases)
 
 ### API Events
 
