@@ -52,8 +52,8 @@ dependencies {
 
 TwitchMCSync adds two events you can listen to.
 
-[`TwitchSubscribeEvent`](https://github.com/Dessie0/TwitchMCSync/blob/master/src/main/java/me/dessie/twitchminecraft/events/twitchminecraft/TwitchSubscribeEvent.java), 
-[`TwitchExpireEvent`](https://github.com/Dessie0/TwitchMCSync/blob/master/src/main/java/me/dessie/twitchminecraft/events/twitchminecraft/TwitchExpireEvent.java), and
+[`TwitchSyncEvent`](https://github.com/Dessie0/TwitchMCSync/blob/master/src/main/java/me/dessie/twitchminecraft/events/twitchminecraft/TwitchSubscribeEvent.java), 
+[`TwitchUnsyncEvent`](https://github.com/Dessie0/TwitchMCSync/blob/master/src/main/java/me/dessie/twitchminecraft/events/twitchminecraft/TwitchExpireEvent.java), and
 
 <details>
 <summary>Example class for using events</summary>
@@ -62,13 +62,7 @@ TwitchMCSync adds two events you can listen to.
 public class Example implements Listener {
 
     @EventHandler
-    public void onSubscribe(TwitchSubscribeEvent event) {
-        if(event.getTwitchPlayer().getStreak() > 6) {
-            if(event.getTwitchPlayer().getPlayer().isOnline()) {
-                event.getTwitchPlayer().getPlayer().getPlayer().sendMessage(ChatColor.GREEN + "Thank you for supporting us for " + event.getTwitchPlayer().getStreak() + " months! You're awesome!");
-            }
-        }
-
+    public void onSubscribe(TwitchSyncEvent event) {
         Bukkit.getOnlinePlayers().forEach(player -> {
             player.sendMessage(ChatColor.GREEN + "" + ChatColor.BOLD + event.getTwitchPlayer().getName() + 
                     " (" + event.getTwitchPlayer().getChannelName() + ") just subscribed at tier " 
