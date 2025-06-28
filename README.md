@@ -291,6 +291,9 @@ reload: "<green>Successfully reloaded configuration files and webserver."
 - `/twitchreload` - Reloads the configuration. (twitchmcsync.reload)
 - `/tmessage <player> <message>` - Sends a message directly to a player with Adventure component support. Only can be ran by Console.
 
+## Other Permissions
+`twitchmcsync.submode.bypass` - Allows users to join, even if they are not subscribed or synced and submode is on. Note that this only works with [LuckPerms]("https://luckperms.net/")
+
 ## :bug: Known Bugs
 - Resubscribe Commands are fired everytime a Player joins the server. Unfortunately, this is a result of a Twitch's Helix API limitation where the endpoint does not provide an expiration date or streak to applications. 
 This means that tracking when a user subscribed (and therefore resubscribed) is impossible. If you wish to help have this feature added back to the API, please upvote [here](https://twitch.uservoice.com/forums/310213-developers/suggestions/44874949-re-add-created-at-streak-and-or-expires-to-check)
