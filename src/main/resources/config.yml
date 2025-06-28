@@ -1,73 +1,62 @@
-clientID: "<Your client ID>"
-clientSecret: "<Your client secret>"
-channelName: "<Twitch username>"
-redirectURI: "http://localhost:8080"
+#You can find full setup instructions at https://github.com/Dessie0/TwitchMinecraftSync#readme
+
+#The Client Secret given to you by Twitch at https://dev.twitch.tv/console/apps
+client_id: "<Your client ID>"
+
+#The Client Secret given to you by Twitch at https://dev.twitch.tv/console/apps
+#YOU SHOULD NEVER SHARE YOUR CLIENT SECRET WITH ANYONE.
+client_secret: "<Your client secret>"
+
+#The broadcaster you want to sync with.
+broadcaster_username: "<Twitch username>"
+
+#This will never match your server's Minecraft IP:Port, usually it will be the same IP on the port listed below.
+#Optionally, you can set this up to use a domain.
+#Examples:
+#  - http://localhost:8080
+#  - http://172.182.52.222:8177
+#  - http://sync.my-cool-server.com
+redirect_url: "<Server URL>"
+
+#The port that the webserver will be started on. If you're using a host, you may need to add this as an additional port
+#and set this value to whatever they assign to you.
 port: 8080
 
-rewards:
-  tier1:
-    subscribe:
-      #The role to give them when they subscribe
-      #Set to '' to ignore role giving.
-      role: "Subscriber"
+#Use either "flatfile" or "db". If you choose db, the database settings must be configured.
+storage_format: "flatfile"
 
-      #The commands to execute when they subscribe
-      #%player% will get their Minecraft username
-      #%twitchname% will get their Twitch username.
+database:
+  host: "localhost"
+  port: 3306
+  database: "database"
+  username: "syncdatabase"
+  password: "averysecurepassword"
 
-      #Use -p at the end if you want the command to be executed by the player.
-      #By default all commands are ran by console.
-      commands:
-        - say Thank you %player% for syncing your Twitch account! (%twitchname%)
-        - give %player% diamond 1
-        - spawn -p
+#Enables sub-only mode.
+#When enabled, only people subscribed to the Twitch broadcaster above will be allowed to join.
+#When disabled, all players will be able to join.
+submode:
+  #Current value, also controlled via /submode
+  enabled: false
 
-    resubscribe:
-      role: "Subscriber"
-      commands:
-        - say Thank you %player% for re-subscribing! (%twitchname%)
+  #When re-enabled, should we kick users that are not synced/subscribed?
+  kick_non_subs_when_enabled: true
 
-    expire:
-      #The role to remove from them when it expires.
-      role: "Subscriber"
-      commands:
-        - say %player% (%twitchname%) has not renewed their subscription :(
-        - spawn -p
+  #Automatically enable sub-mode during certain time periods.
+  #If Submode is enabled via the /submode command, this will have no effect.
+  #This only works if the above "enabled" value is false.
+  auto_submode: true
 
-  tier2:
-    subscribe:
-      role: "Subscriber2"
-      commands:
-        - say Thank you %player% for syncing your Twitch account at tier 2! (%twitchname%)
-        - give %player% diamond 5
-        - spawn -p
+  #Which Timezone to use when calculating if a submode window is active
+  auto_submode_timezone: "America/New_York"
 
-    resubscribe:
-      role: "Subscriber2"
-      commands:
-        - say Thank you %player% for re-subscribing at tier 2! (%twitchname%)
-
-    expire:
-      role: "Subscriber2"
-      commands:
-        - say %player% (%twitchname%) has not renewed their subscription :(
-        - spawn -p
-
-  tier3:
-    subscribe:
-      role: "Subscriber3"
-      commands:
-        - say Thank you %player% for syncing your Twitch account at tier 3! (%twitchname%)
-        - give %player% diamond 15
-        - spawn -p
-
-    resubscribe:
-      role: "Subscriber3"
-      commands:
-        - say Thank you %player% for re-subscribing at tier 3! (%twitchname%)
-
-    expire:
-      role: "Subscriber3"
-      commands:
-        - say %player% (%twitchname%) has not renewed their subscription :(
-        - spawn -p
+  #Submode windows, you can define as many of these as you wish and the name does not matter.
+  #In the example provided, Sub-mode would be automatically turned on at Midnight on Saturday,
+  #and would turn off at Midnight on Monday.
+  submode_windows:
+    sub_weekend:
+      days:
+        - SATURDAY
+        - SUNDAY
+      start: "00:00"
+      end: "23:59"

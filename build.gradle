@@ -1,28 +1,26 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.gradleup.shadow" version "8.3.0"
     id 'java-library'
     id 'maven-publish'
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.14"
 }
 
 group 'com.twitchmcsync'
-version '1.2.5'
+version '2.0.0'
 
 java.toolchain {
-    languageVersion = JavaLanguageVersion.of(17)
+    languageVersion = JavaLanguageVersion.of(21)
 }
 
 compileJava.options.encoding = 'UTF-8'
 
-task copyJar(type: Copy) {
-    from "$buildDir/libs/"
-    into project.findProperty("outputDir")
-}
-
-build.finalizedBy copyJar
-
 repositories {
     mavenCentral()
     mavenLocal()
+
+    maven {
+        url "https://repo.papermc.io/repository/maven-public/"
+    }
 
     maven {
         url 'https://repo.opencollab.dev/maven-snapshots/'
@@ -34,15 +32,12 @@ repositories {
 }
 
 publishing {
-    repositories {
-        maven {
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/dessie0/twitchminecraftsync")
-            credentials {
-                username = project.findProperty("gpr.user") ?: System.getenv("GITHUB_USERNAME")
-                password = project.findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
-
-            }
+    repositories.maven {
+        name = "DessieRepo"
+        url "https://repo.dessie.me/repository/dessielib/"
+        credentials {
+            username = findProperty("repoUser") ?: System.getenv("REPO_USERNAME")
+            password = findProperty("repoPassword") ?: System.getenv("REPO_PASSWORD")
         }
     }
 
@@ -56,19 +51,50 @@ publishing {
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.19.2-R0.1-SNAPSHOT"
+    paperweightDevelopmentBundle("io.papermc.paper:dev-bundle:1.21.4-R0.1-SNAPSHOT")
 
-    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
-    compileOnly 'org.geysermc.floodgate:api:2.0-SNAPSHOT'
+    implementation "com.fasterxml.jackson.core:jackson-core:2.19.0"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.19.0"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.19.0"
+
+    implementation 'com.github.twitch4j:twitch4j:1.25.0'
+    implementation 'com.github.philippheuer.events4j:events4j-handler-simple:0.12.2'
+
+    implementation 'com.squareup.retrofit2:retrofit:3.0.0'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:3.0.0'
+
+    compileOnly 'org.nanohttpd:nanohttpd:2.3.1'
+    compileOnly('org.projectlombok:lombok:1.18.34')
+    compileOnly 'net.luckperms:api:5.4'
+    annotationProcessor('org.projectlombok:lombok:1.18.34')
+
     implementation 'net.lingala.zip4j:zip4j:2.11.2'
-    implementation 'me.dessie.dessielib.storage-api:spigot:1.3.3'
 
-    annotationProcessor 'me.dessie.dessielib:annotations:1.3.3'
+    implementation "me.dessie.dessielib.storage-api:spigot:1.3.5"
+    implementation "me.dessie.dessielib:command-api:1.5.0"
 }
 
-//Used to create the fat jar
-build.dependsOn {
-    shadowJar {
-        archiveFileName = "${project.name}-${project.version}.jar"
+shadowJar {
+    relocate("com.fasterxml.jackson", "com.twitchmcsync.shadow.jackson")
+    relocate("com.github.twitch4j", "com.twitchmcsync.shadow.twitch4j")
+    relocate("retrofit2", "com.twitchmcsync.shadow.retrofit2")
+    relocate("okhttp3", "com.twitchmcsync.shadow.okhttp3")
+    relocate("okio", "com.twitchmcsync.shadow.okio")
+}
+
+task copyJar {
+    String outputDir = rootProject.findProperty("outputDir")
+    def jarFile = file("${layout.buildDirectory.get().asFile.path}/libs/${project.name}-${project.version}-all.jar")
+    def targetFile = file(outputDir == null ? "${layout.buildDirectory.get().asFile.path}/libs/${jarFile.name}" : "${outputDir}/${jarFile.name}")
+
+    doLast {
+        copy {
+            from jarFile
+            into targetFile.parentFile
+            rename { fileName -> targetFile.name } // Ensure it's renamed to the target file name
+        }
     }
 }
+
+shadowJar.finalizedBy copyJar

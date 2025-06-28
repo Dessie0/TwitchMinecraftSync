@@ -1,288 +1,203 @@
 package com.twitchmcsync.twitchminecraft;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.twitchmcsync.twitchminecraft.authentication.JoinAuthorization;
+import com.twitchmcsync.twitchminecraft.authentication.TwitchAuthWebServer;
+import com.twitchmcsync.twitchminecraft.authentication.TwitchPlayer;
 import com.twitchmcsync.twitchminecraft.commands.*;
-import com.twitchmcsync.twitchminecraft.events.JoinListener;
+import com.twitchmcsync.twitchminecraft.events.TwitchEventListener;
 import com.twitchmcsync.twitchminecraft.lang.Language;
-import com.twitchmcsync.twitchminecraft.webserver.WebServer;
+import com.twitchmcsync.twitchminecraft.live.LiveCommands;
+import com.twitchmcsync.twitchminecraft.live.LiveModule;
+import com.twitchmcsync.twitchminecraft.reward.SyncReward;
+import com.twitchmcsync.twitchminecraft.storage.DatabaseManager;
+import com.twitchmcsync.twitchminecraft.submode.SubMode;
+import com.twitchmcsync.twitchminecraft.submode.SubmodeWindow;
+import com.twitchmcsync.twitchminecraft.twitchapi.TwitchSyncAPI;
+import com.twitchmcsync.twitchminecraft.twitchapi.TwitchWrapper;
+import com.twitchmcsync.twitchminecraft.twitchapi.twitch.OAuthToken;
+import lombok.Getter;
+import me.dessie.dessielib.commandapi.CommandAPI;
 import me.dessie.dessielib.storageapi.SpigotStorageAPI;
-import net.lingala.zip4j.ZipFile;
-import net.milkbowl.vault.permission.Permission;
+import me.dessie.dessielib.storageapi.format.flatfile.JSONContainer;
+import me.dessie.dessielib.storageapi.format.flatfile.YAMLContainer;
+import me.dessie.dessielib.storageapi.settings.StorageSettings;
+import net.luckperms.api.LuckPerms;
+import okhttp3.OkHttpClient;
 import org.bukkit.Bukkit;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import retrofit2.Retrofit;
+import retrofit2.converter.scalars.ScalarsConverterFactory;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.logging.Level;
+import java.io.File;
+import java.io.IOException;
+import java.util.UUID;
 
+@Getter
 public class TwitchMinecraft extends JavaPlugin {
 
+    @Getter
     private static TwitchMinecraft instance;
 
-    private SpigotStorageAPI storageAPI;
-    private Permission permission;
-    private WebServer webServer;
-    private RewardHandler rewardHandler;
-    private String channelID;
+    private TwitchAuthWebServer webServer;
+    private TwitchSyncAPI syncAPI;
+    private String secret;
+    private OkHttpClient httpClient;
+    private TwitchWrapper twitchWrapper;
 
-    public File htmlFolder = new File(getDataFolder(), "webserver");
-    public File indexFile = new File(getDataFolder(), "webserver" + File.separator + "index.html");
+    private YAMLContainer configContainer;
+    private YAMLContainer rewardContainer;
+    private YAMLContainer liveModuleContainer;
+    private JSONContainer flatfileContainer;
 
+    private LiveModule liveModule;
+    private DatabaseManager databaseManager;
     private Language language;
+    private SubMode subMode;
 
-    private File twitchData;
-    private FileConfiguration twitchConfig;
+    private SpigotStorageAPI storageAPI;
+    private CommandAPI commandAPI;
+    private LuckPerms luckPerms;
 
-    private boolean floodGateEnabled;
-    private boolean vaultEnabled;
-
-    private String appAccess;
+    private String broadcasterUsername;
 
     @Override
     public void onEnable() {
         instance = this;
 
-        this.storageAPI = SpigotStorageAPI.register(this);
-        this.language = new Language(this);
+        this.saveDefaultConfig();
 
-        //Hook into Floodgate and Vault.
-        this.floodGateEnabled = this.getServer().getPluginManager().isPluginEnabled("floodgate");
-        this.vaultEnabled = setupPermissions();
+        this.commandAPI = CommandAPI.register(this, false);
+        this.getCommandAPI().registerCommand(new TwitchInfoCommand());
+        this.getCommandAPI().registerCommand(new ReloadCommand());
+        this.getCommandAPI().registerCommand(new SubModeCommand());
+        this.getCommandAPI().registerCommand(new SyncCommand());
+        this.getCommandAPI().registerCommand(new UnsyncCommand());
+        this.getCommandAPI().registerCommand(new RevokeCommand());
+        this.getCommandAPI().registerCommand(new LiveCommand());
+        this.getCommandAPI().registerCommand(new TwitchMessageCommand());
 
-        if(!isVaultEnabled()) {
-            this.getLogger().log(Level.WARNING, "Unable to hook into Vault, groups will not be added or removed to users.");
+        //Load LuckPerms, if it exists.
+        if(Bukkit.getPluginManager().getPlugin("LuckPerms") != null) {
+            RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+            if (provider != null) {
+                luckPerms = provider.getProvider();
+            }
         }
 
+        //Register the class for storing in flatfile.
+        this.storageAPI = SpigotStorageAPI.register(this, false);
+        this.getStorageAPI().registerAnnotatedDecomposer(TwitchPlayer.class);
+        this.getStorageAPI().registerAnnotatedDecomposer(OAuthToken.class);
+        this.getStorageAPI().registerAnnotatedDecomposer(SyncReward.class);
+        this.getStorageAPI().registerAnnotatedDecomposer(SubMode.class);
+        this.getStorageAPI().registerAnnotatedDecomposer(SubmodeWindow.class);
+        this.getStorageAPI().registerAnnotatedDecomposer(LiveCommands.class);
+
+        //Load all the values.
+        this.reloadPlugin();
+
+        //Default HTTP Client for OkHttp
+        this.httpClient = new OkHttpClient();
+
+        //Production version
+        this.syncAPI = new Retrofit.Builder().baseUrl("https://twitchmcsync.com/")
+                .addConverterFactory(ScalarsConverterFactory.create())
+                .client(this.getHttpClient())
+                .build().create(TwitchSyncAPI.class);
+
+        this.getServer().getPluginManager().registerEvents(new JoinAuthorization(), this);
+        this.getServer().getPluginManager().registerEvents(new TwitchEventListener(), this);
+    }
+
+    public void reloadPlugin() {
+        this.reloadConfig();
+        this.configContainer = new YAMLContainer(this.getStorageAPI(), new File(this.getDataFolder(), "config.yml"));
+
+        //Generate the server secret for this session.
+        this.secret = UUID.randomUUID().toString().replace("-", "");
+
         //Create the WebServer for hosting the local website.
-        this.webServer = new WebServer(this);
+        try {
+            if(this.getWebServer() != null) {
+                this.getWebServer().stop();
+            }
 
-        //Setup the RewardHandler for synchronization.
-        this.rewardHandler = new RewardHandler(this);
+            this.webServer = new TwitchAuthWebServer(this, this.getSecret(), this.getConfig().getInt("port"));
+            this.webServer.start();
+            this.getLogger().info("Started on port " + this.getConfig().getInt("port"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-        this.loadFiles();
-        this.saveDefaultConfig();
-        this.createFiles();
+        //Setup values so we don't have to constantly read from the config.
+        this.broadcasterUsername = this.getConfig().getString("broadcaster_username");
+        this.subMode = this.getConfigContainer().retrieve(SubMode.class, "submode");
 
-        this.webServer.create(getConfig().getInt("port"));
+        //Close the old one.
+        if(this.getTwitchWrapper() != null) {
+            this.getTwitchWrapper().getClient().close();
+        }
 
-        this.getCommand("sync").setExecutor(new SyncCMD(this));
-        this.getCommand("revoke").setExecutor(new RevokeCMD(this));
-        this.getCommand("tinfo").setExecutor(new InfoCMD(this));
-        this.getCommand("twitchreload").setExecutor(new ReloadCMD(this));
-        this.getCommand("twitchserverreload").setExecutor(new ReloadServerCMD(this));
+        //Setup Storage options for holding Twitch Data.
+        String storageFormat = this.getConfig().getString("storage_format");
+        storageFormat = storageFormat == null ? "flatfile" : storageFormat;
 
-        //Get the channel ID of the channel we're check for subs.
-        this.retrieveChannelID();
+        if(storageFormat.equalsIgnoreCase("flatfile")) {
+            File file = new File(this.getDataFolder(), "twitchdata.json");
 
-        this.getServer().getPluginManager().registerEvents(new JoinListener(this), this);
+            if(!file.exists()) {
+                saveResource("twitchdata.json", false);
+            }
+
+            this.flatfileContainer = new JSONContainer(this.getStorageAPI(), file);
+            this.getFlatfileContainer().getSettings().setUsesCache(false);
+
+        } else if(storageFormat.equalsIgnoreCase("db") || storageFormat.equalsIgnoreCase("database")) {
+            String host = this.getConfig().getString("database.host");
+            int port = this.getConfig().getInt("database.port");
+            String database = this.getConfig().getString("database.database");
+            String username = this.getConfig().getString("database.username");
+            String password = this.getConfig().getString("database.password");
+
+            this.databaseManager = new DatabaseManager(host, port, database, username, password);
+        }
+
+        //Create the API wrapper for Twitch.
+        this.twitchWrapper = new TwitchWrapper(this, this.getBroadcasterUsername(),
+                this.getConfig().getString("client_id"), this.getConfig().getString("client_secret"));
+
+        this.saveDefaultLoadFile("lang.yml");
+        this.language = new Language(this);
+
+        //Load sync rewards.
+        this.rewardContainer = this.saveDefaultLoadFile("sync_rewards.yml");
+        SyncReward.reloadRewards(this);
+
+        //Load live module rewards.
+        this.liveModuleContainer = this.saveDefaultLoadFile("live.yml");
+        if(this.getLiveModuleContainer().retrieve("enabled")) {
+            if(this.liveModule == null) {
+                this.liveModule = new LiveModule(this);
+                this.getServer().getPluginManager().registerEvents(this.getLiveModule(), this);
+            } else {
+                this.getLiveModule().reload();
+            }
+        }
+    }
+
+    private YAMLContainer saveDefaultLoadFile(String name) {
+        File file = new File(this.getDataFolder(), name);
+        if(!file.exists()) {
+            this.saveResource(name, false);
+        }
+        return new YAMLContainer(this.getStorageAPI(), new File(this.getDataFolder(), name), new StorageSettings().setUsesCache(false));
     }
 
     @Override
     public void onDisable() {
-        this.webServer.remove();
-    }
-
-    /**
-     * Retrieves the Channel ID of the Twitch User from Twitch.
-     */
-    public void retrieveChannelID() {
-        Bukkit.getLogger().info("[TwitchMinecraftSync] Getting Channel ID for " + getConfig().getString("channelName"));
-
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-
-            String clientId = this.getConfig().getString("clientID");
-            String clientSecret = this.getConfig().getString("clientSecret");
-
-            if(clientId == null || clientSecret == null) {
-                this.channelID = null;
-                this.getLogger().log(Level.SEVERE, "Unable to find client ID or client secret. Syncing has been disabled.");
-                return;
-            }
-
-            if(clientId.contains("<") || clientSecret.contains("<")) {
-                this.channelID = null;
-                this.getLogger().log(Level.INFO, "You need to setup the configuration with your Client ID and Client Secret. More setup information can be found at https://github.com/Dessie0/TwitchMinecraftSync#readme");
-                return;
-            }
-
-            try {
-                URL url = new URL("https://id.twitch.tv/oauth2/token?client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=client_credentials");
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                con.setRequestMethod("POST");
-
-                JsonObject json = getJsonObject(con.getInputStream());
-                this.appAccess = json.get("access_token").getAsString();
-            } catch (IOException e) {
-                this.channelID = null;
-                this.getLogger().log(Level.SEVERE, "Invalid Client ID or Client Secret, please make sure the configuration matches with your Twitch Application IDs.");
-                return;
-            }
-
-            try {
-                String channelName = getConfig().getString("channelName");
-
-                if(channelName == null) {
-                    this.channelID = null;
-                    this.getLogger().log(Level.SEVERE, "Unable to find twitch channel name");
-                    return;
-                }
-
-                if(channelName.contains("<")) {
-                    this.channelID = null;
-                    this.getLogger().log(Level.INFO, "You need to setup the configuration with your channel name. More setup information can be found at https://github.com/Dessie0/TwitchMinecraftSync#readme");
-                    return;
-                }
-
-                URL url = new URL("https://api.twitch.tv/helix/users?login=" + channelName);
-                HttpURLConnection con = (HttpURLConnection) url.openConnection();
-
-                con.setRequestProperty("Accept", "application/vnd.twitchtv.v5+json");
-                con.setRequestProperty("Client-ID", getConfig().getString("clientID"));
-                con.setRequestProperty("Authorization", "Bearer " + this.appAccess);
-
-                con.setRequestMethod("GET");
-
-                try {
-                    JsonObject json = getJsonObject(con.getInputStream());
-                    this.channelID = json.get("data").getAsJsonArray().get(0).getAsJsonObject().get("id").getAsString();
-                } catch (IndexOutOfBoundsException | IOException e) {
-                    this.getLogger().log(Level.SEVERE, "Unable to find a Twitch channel by the name " + channelName + ".");
-                }
-
-                this.getLogger().log(Level.INFO, "Successfully started TwitchMinecraftSync for user " + channelName);
-
-                con.disconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    public JsonObject getJsonObject(InputStream stream) throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(stream));
-        JsonObject object = new JsonParser().parse(in).getAsJsonObject();
-        in.close();
-
-        return object;
-    }
-
-    /**
-     * Restarts the WebServer
-     */
-    public void restartWebServer() {
-        this.getWebServer().remove();
-        this.getWebServer().create(this.getConfig().getInt("port"));
-    }
-
-    public Language getLanguage() {
-        return language;
-    }
-    public Permission getPermission() {
-        return permission;
-    }
-    public WebServer getWebServer() {
-        return webServer;
-    }
-    public String getChannelID() {
-        return channelID;
-    }
-
-    public String getAppAccess() {
-        return appAccess;
-    }
-
-    public void createFiles() {
-        //Create the files if they do not exist.
-        if(!twitchData.exists()) {
-            saveResource(twitchData.getName(), false);
+        if(this.getWebServer() != null) {
+            this.webServer.stop();
         }
-
-        if(!htmlFolder.exists()) {
-            htmlFolder.mkdirs();
-            try {
-                //Copy the zip file.
-                Files.copy(this.getResource("serverdisplay.zip"), new File(getDataFolder() + "/webserver/serverdisplay.zip").toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                //Unzip
-                new ZipFile(getDataFolder() + "/webserver/serverdisplay.zip")
-                        .extractAll(getDataFolder() + "/webserver");
-
-                //Delete zip file
-                new File(getDataFolder() + "/webserver/serverdisplay.zip").delete();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        //Load the configurations.
-        this.loadFiles();
-    }
-
-    public void reloadLanguage() {
-        this.language = new Language(this);
-    }
-
-    public void loadFiles() {
-        twitchData = new File(getInstance().getDataFolder() + "/twitchdata.yml");
-        twitchConfig = YamlConfiguration.loadConfiguration(twitchData);
-    }
-
-    public static void saveFile(File file, FileConfiguration fconf) {
-        try{
-            fconf.save(file);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private boolean setupPermissions() {
-        try {
-            //Only used to throw ClassNotFoundException.
-            Class<?> clazz = Class.forName("net.milkbowl.vault.permission.Permission");
-            RegisteredServiceProvider<Permission> rsp = getServer().getServicesManager().getRegistration(Permission.class);
-            if (rsp == null) {
-                return false;
-            }
-
-            permission = rsp.getProvider();
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
-
-    public RewardHandler getRewardHandler() {
-        return rewardHandler;
-    }
-
-    public File getTwitchData() {
-        return twitchData;
-    }
-
-    public FileConfiguration getTwitchConfig() {
-        return twitchConfig;
-    }
-
-    public boolean isFloodGateEnabled() {
-        return floodGateEnabled;
-    }
-    public boolean isVaultEnabled() {
-        return vaultEnabled;
-    }
-
-    public SpigotStorageAPI getStorageAPI() {
-        return storageAPI;
-    }
-
-    public static TwitchMinecraft getInstance() {
-        return instance;
     }
 }

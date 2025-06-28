@@ -1,0 +1,48 @@
+#These commands are executed when a player is synced with a specific tier level.
+#The subscribe commands will only be ran the first time they sync, or if they were unsubscribed at any point and then re-subscribed.
+#They will not run if their subscription never expired and they continued subscribing through multiple months.
+
+#Placeholders ---
+# %player% - Minecraft Username
+# %twitchname% - Twitch Username
+# %tier% - Subscription Tier: Always 1, 2, or 3.
+
+#Additional Notes
+# You can use -p at the end of a command for it to be ran by the Player.
+# By Default, all commands are executed by Console.
+
+no_sub:
+  #These commands will be ran when a user syncs with no subscription.
+  subscribe:
+    - tmessage %player% <green>Thank you for syncing! We see you're not subscribed, you can subscribe <aqua><click:open_url:'https://twitch.tv/%broadcaster%'>here<click>
+
+  #These commands will be ran when a user unsyncs with no subscription.
+  expired:
+    - <red>You unsynced without a subscription!
+
+all:
+  subscribe:
+    - tmessage %player% <green>Thank you <aqua>%player% <green>for syncing your Twitch account at tier <aqua>%tier%! <gold>(%twitchname%)
+  expire:
+    - tmessage %player% <green>%player% <gold>(%twitchname%) <red>has not renewed their subscription :(
+
+tier_1:
+  subscribe:
+    - give %player% diamond 1
+    - spawn -p
+  expire:
+    - spawn -p
+
+tier_2:
+  subscribe:
+    - give %player% diamond 5
+    - spawn -p
+  expire:
+    - spawn -p
+
+tier_3:
+  subscribe:
+    - give %player% diamond 15
+    - spawn -p
+  expire:
+    - spawn -p

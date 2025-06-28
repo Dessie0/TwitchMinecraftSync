@@ -1,0 +1,15 @@
+#This module is used for running commands if a synced player goes live while on the server.
+enabled: false
+
+commands:
+  #Commands to run when the user goes live.
+  #These will also be fired if they join the server while live.
+  live:
+    - "tmessage %player% <green>%player% <gold>has gone live at <aqua><click:open_url:'https://twitch.tv/%twitchname%/'>https://twitch.tv/%twitchname%/</click>."
+    - "lp user %player% parent set live"
+
+  #Commands to run when the user goes offline.
+  #These will also be fired if the user unsyncs, subscription expires/revoked, or they leave the server.
+  offline:
+    - "tmessage %player% <green>%player% <gold>has stopped streaming :("
+    - "lp user %player% parent remove live"

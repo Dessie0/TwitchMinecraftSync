@@ -1,36 +1,11 @@
-name: TwitchMinecraftSync
+name: TwitchMCSync
 author: Dessie
-version: 1.2.5
+version: 2.0.0
 main: com.twitchmcsync.twitchminecraft.TwitchMinecraft
 
-api-version: 1.18
-softdepend:
-  - floodgate
-  - Vault
+libraries:
+  - org.nanohttpd:nanohttpd:2.3.1
 
-commands:
-  sync:
-    description: Syncs the user's Minecraft account with their Twitch account
-    aliases:
-      - twitchsync
-      - twitch
-  revoke:
-    description: Revokes a user's permissions and runs the expires commands for them. They can still resync!
-    aliases:
-      - twitchrevoke
-  tinfo:
-    description: Gets the Twitch information of a Minecraft player.
-    aliases:
-      - twitchinfo
+softdepend: [LuckPerms]
 
-  twitchreload:
-    description: Reloads configuration files.
-    aliases:
-      - treload
-      - twitchsyncreload
-
-  twitchserverreload:
-    description: Restarts the webserver.
-    aliases:
-      - tserverreload
-      - twitchsyncserverreload
+api-version: 1.21
